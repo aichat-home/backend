@@ -47,6 +47,6 @@ services:
 # Define a volume for persisting postgreSQL data
 volumes:
   postgres_data:
-# networks:
-#   default:
-#     driver: bridge
+networks:
+  default:
+    driver: bridge
