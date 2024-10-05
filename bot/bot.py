@@ -22,7 +22,7 @@ from models import User
 bot = Bot(settings.telegram_token)
 dp = Dispatcher()
 
-ADMIN_IDS = (1795945549, 215648)
+ADMIN_IDS = (540314239)
 
 
 
