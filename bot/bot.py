@@ -25,6 +25,7 @@ dp = Dispatcher()
 
 ADMIN_IDS = (540314239, 1795945549)
 
+photo = FSInputFile('bot/media/start.jpg')
 
 
 class NotifyState(StatesGroup):
@@ -60,7 +61,7 @@ async def start(message: Message):
             'As an ambitious galactic explorer, you find yourself on the verge of riches and wealth, where collecting crystals and coins will line your pockets with the most expensive space dust... 🌌'
             )
     
-    photo = FSInputFile('bot/images/start.jpg')
+    
     await bot.send_photo(message.chat.id, photo=photo, caption=text, reply_markup=inline_builder(settings.webapp_url, message.chat.id))
 
 
