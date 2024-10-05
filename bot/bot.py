@@ -92,12 +92,16 @@ async def waiting_for_message(message: Message, state: FSMContext, session: Asyn
 
         await bot.send_message(message.from_user.id, 'Starting')
 
+        users_sent = 0
         for user in users:
             tasks.append(send_message_to_user(user.id, message.text))
 
             if len(tasks) == 25:
                 await asyncio.gather(*tasks)
                 tasks = []
+                users_sent += 25
+                if users_sent % 1000 == 0:
+                    await bot.send_message(message.from_user.id, f'Sent {users_sent} users')
                 await asyncio.sleep(1)
 
     elif current_state == CreatePartnerState.waiting_for_name:
@@ -125,7 +129,7 @@ async def waiting_for_message(message: Message, state: FSMContext, session: Asyn
 async def send_message_to_user(user_id, text):
     try:
         await bot.send_photo(user_id, notification_photo, caption=text)
-    except TelegramBadRequest as e:
+    except Exception as e:
         print(f'Error sending message to {user_id}: {e}')
 
 
