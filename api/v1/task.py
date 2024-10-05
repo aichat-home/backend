@@ -82,6 +82,9 @@ async def check_referral(
     account = result.scalars().first()
 
     if account:
+        if account.reffers_checked is None:
+            account.reffers_checked = 0
+            await session.commit()
         if account.reffers_checked < count:
             if len(account.reffers) >= count:
                 reward = task.get_reward_for_reffers(count)
