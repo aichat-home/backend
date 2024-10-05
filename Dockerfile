@@ -34,4 +34,4 @@ WORKDIR /app
 EXPOSE 8000
 
 # Run Uvicorn to start your Python web application
-CMD python bot.py && uvicorn main:app --host 0.0.0.0 --port 8000
+CMD uvicorn main:app --host 0.0.0.0 --port 8000
