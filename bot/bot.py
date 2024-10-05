@@ -93,7 +93,7 @@ async def waiting_for_message(message: Message, state: FSMContext, session: Asyn
         await bot.send_message(message.from_user.id, 'Starting')
 
         for user in users:
-            tasks.append(send_message_to_user(message.from_user.id, message.text))
+            tasks.append(send_message_to_user(user.id, message.text))
 
             if len(tasks) == 25:
                 await asyncio.gather(*tasks)
