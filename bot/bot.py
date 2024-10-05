@@ -1,5 +1,6 @@
 import asyncio
 
+import base64
 from typing import Callable, Dict, Any
 
 from aiogram import Bot, Dispatcher
@@ -16,18 +17,22 @@ from sqlalchemy.future import select
 from core import settings
 from .inline import inline_builder
 from db import database
-from models import User
+from models import User, Partner
 
 
 bot = Bot(settings.telegram_token)
 dp = Dispatcher()
 
-ADMIN_IDS = (540314239)
+ADMIN_IDS = (540314239, 1795945549)
 
 
 
 class NotifyState(StatesGroup):
     waiting_for_message = State()
+
+
+class CreatePartnerState(StatesGroup):
+    waiting_for_name = State()
 
 
 class DbSessionMiddleware(BaseMiddleware):
@@ -59,6 +64,13 @@ async def start(message: Message):
     await bot.send_photo(message.chat.id, photo=photo, caption=text, reply_markup=inline_builder(settings.webapp_url, message.chat.id))
 
 
+@dp.message(Command('create_partner'))
+async def create_partner(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    if user_id in ADMIN_IDS:
+        await state.set_state(CreatePartnerState.waiting_for_name)
+        await message.answer('Send name of partner')
+
 
 @dp.message(Command('notify'))
 async def notify(message: Message, state: FSMContext):
@@ -71,23 +83,33 @@ async def notify(message: Message, state: FSMContext):
 @dp.message()
 async def waiting_for_message(message: Message, state: FSMContext, session: AsyncSession):
     current_state = await state.get_state()
-    if current_state != NotifyState.waiting_for_message.state:
-        return  # If we're not in the correct state, ignore this message
+    if current_state == NotifyState.waiting_for_message.state:
+        result = await session.execute(select(User))
+        users = result.scalars().all()
+        tasks = []
 
-    result = await session.execute(select(User))
-    users = result.scalars().all()
-    tasks = []
+        await bot.send_message(message.from_user.id, 'Starting')
 
+        for user in users:
+            tasks.append(send_message_to_user(user.id, message.text))
+
+            if len(tasks) == 25:
+                await asyncio.gather(*tasks)
+                tasks = []
+                await asyncio.sleep(1)
+
+    elif current_state == CreatePartnerState.waiting_for_name:
+        stmt = select(Partner.id).order_by(Partner.id.desc())
+        last_id = await session.execute(stmt)
+        last_id = last_id.scalars().first()
+        partner_name = message.text
+        invite_code = base64.b64encode(str(partner_name).encode('ascii')).decode('ascii')
+        partner = Partner(id=last_id + 1, name=partner_name, inviteCode=invite_code)
+        session.add(partner)
+        await session.commit()
+        await message.answer(f'Partner {partner_name} created with invite code https://t.me/BeamTapBot/Dapp?startapp={invite_code}')  
     
-    await bot.send_message(message.from_user.id, 'Starting')
-
-    for user in users:
-        tasks.append(send_message_to_user(user.id, message.text))
-
-        if len(tasks) == 25:
-            await asyncio.gather(*tasks)
-            tasks = []
-            await asyncio.sleep(1)
+    
     
     # Run all tasks concurrently using asyncio.gather
     await asyncio.gather(*tasks)
