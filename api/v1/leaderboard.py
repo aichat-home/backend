@@ -23,7 +23,7 @@ async def get_leaderboard(session: AsyncSession = Depends(database.get_async_ses
             select(Wallet, User)
             .join(Wallet.user)  # Join Wallet with its related User
             .order_by(Wallet.coins.desc())
-            .limit(100)
+            .limit(50)
         )
         
         # Extract the Wallet and User data
