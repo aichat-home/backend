@@ -26,6 +26,7 @@ dp = Dispatcher()
 ADMIN_IDS = (540314239, 1795945549)
 
 photo = FSInputFile('bot/media/start.jpg')
+notification_photo = FSInputFile('bot/media/notification.jpg')
 
 
 class NotifyState(StatesGroup):
@@ -92,7 +93,7 @@ async def waiting_for_message(message: Message, state: FSMContext, session: Asyn
         await bot.send_message(message.from_user.id, 'Starting')
 
         for user in users:
-            tasks.append(send_message_to_user(user.id, message.text))
+            tasks.append(send_message_to_user(message.from_user.id, message.text))
 
             if len(tasks) == 25:
                 await asyncio.gather(*tasks)
@@ -123,7 +124,7 @@ async def waiting_for_message(message: Message, state: FSMContext, session: Asyn
 
 async def send_message_to_user(user_id, text):
     try:
-        await bot.send_message(user_id, text)
+        await bot.send_photo(user_id, notification_photo, caption=text)
     except TelegramBadRequest as e:
         print(f'Error sending message to {user_id}: {e}')
 
