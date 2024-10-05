@@ -59,19 +59,24 @@ def create_view(model):
 
 
 class TaskView(ModelView, model=Task):
-    column_list = [column.name for column in Task.__table__.columns]
-    relationships = inspect(Task).relationships
-    column_list += [relation.key for relation in relationships]
+    column_list = ['id', 'icon', 'type', 'title', 'amount', 'link', 'chatId', 'user_completed_count']
+    column_details_list = ['id', 'icon', 'type', 'title', 'amount', 'link', 'chatId']
+    form_columns = ['icon', 'type', 'title', 'amount', 'link', 'chatId']
 
-    column_formatters = {
-        'userscompl': lambda m, a: len(m.usersCompleted)  # Count of completed users
-    }
+
+class PartnerView(ModelView, model=Partner):
+    column_list = ['id', 'name', 'inviteCode', 'users_count']
+    column_details_list = ['id', 'name', 'inviteCode']
+    form_columns = ['id', 'name', 'inviteCode']
+    
+    form_include_pk = True
 
 
 def create_admin(app):
     authentication_backend = AdminAuth(secret_key=settings.telegram_token)
     admin = Admin(app=app, engine=database.engine, authentication_backend=authentication_backend)
-    [admin.add_view(create_view(model)) for model in [User, Account, Wallet, Farm, Partner, Reward, RefferAccount, Add]]
+    [admin.add_view(create_view(model)) for model in [User, Account, Wallet, Farm, Reward, RefferAccount, Add]]
     admin.add_view(TaskView)
+    admin.add_view(PartnerView)
 
     return admin

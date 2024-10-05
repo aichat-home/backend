@@ -22,6 +22,10 @@ class Partner(Base):
 
     users: Mapped[list['User']] = relationship('User', back_populates='Partner')
 
+    @property
+    def users_count(self):
+        return len(self.users)
+
     def __str__(self) -> str:
         return self.name
 
@@ -99,6 +103,13 @@ class Task(Base):
         secondary=AccountToTask,
         back_populates='completedTasks'
     )
+
+    @property
+    def user_completed_count(self):
+        return len(self.usersCompleted)
+    
+    def __str__(self) -> str:
+        return str(self.title)
 
 
 class Wallet(Base):
