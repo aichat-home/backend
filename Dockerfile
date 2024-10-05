@@ -33,4 +33,6 @@ WORKDIR /app
 
 EXPOSE 8000
 
-CMD ["sh", "start.sh"]
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
