@@ -34,7 +34,7 @@ async def get_or_create(
                 reward.day += 1
         
             reward.lastReward = datetime.now()
-            if reward.day == 8:
+            if reward.day >= 8:
                 reward.day = 1
             await session.commit()
         return {
@@ -85,6 +85,9 @@ async def get_me(session: AsyncSession = Depends(database.get_async_session), us
     farm = user.wallet.farm
     time_passed = None
     need_to_claim = False
+    if reward.day >= 8:
+        reward.day = 1
+        await session.commit()
     plus_every_second = reward.day * 0.01
     current_farm_reward = None
     total_duration = settings.farm_seconds
@@ -108,7 +111,8 @@ async def get_me(session: AsyncSession = Depends(database.get_async_session), us
                 claimed = True
         rewards_response.append({'reward': reward, 'claimed': claimed, 'count': count})
 
-
+    user.updated_at = datetime.now()
+    await session.commit()
 
     return {
         'id': user.id,

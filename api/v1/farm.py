@@ -30,7 +30,7 @@ async def start_farm(
     
     if not farm:
         background_tasks.add_task(tasks.send_farm_claim_notification, user.get('id'))
-        farm = Farm(status='Process', wallet=user.get('id'), created_at=datetime.now())
+        farm = Farm(status='Process', wallet=user.get('id'), created_at=datetime.now(), updated_at=datetime.now())
         session.add(farm) 
         await session.commit()
 
@@ -38,6 +38,9 @@ async def start_farm(
 
 
     total_duration = settings.farm_seconds
+    if reward.day >= 8:
+        reward.day = 1
+        await session.commit()
     plus_every_second = reward.day * 0.01
     return {
         'plus_every_second': plus_every_second,
