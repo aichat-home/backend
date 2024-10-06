@@ -25,11 +25,11 @@ def parse_init_data(token: str, raw_init_data: str):
 
 
 def validate_dependency(User_Init_Data: str = Header(None)):
-    if not User_Init_Data or not validate_init_data(settings.telegram_token, User_Init_Data):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='Invalid telegram init data'
-        )
+    # if not User_Init_Data or not validate_init_data(settings.telegram_token, User_Init_Data):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_401_UNAUTHORIZED,
+    #         detail='Invalid telegram init data'
+    #     )
     result = {}
     for key, value in parse_qsl(User_Init_Data):
         try:

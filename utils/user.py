@@ -17,7 +17,7 @@ from models import (
     )
 
 from schemas import UserCreate
-
+from . import activity
 
 
 
@@ -70,27 +70,37 @@ async def create_user(user: UserCreate, inviteCode: str, isPremium: bool, sessio
 
         if partner:
             new_user = User(**user.model_dump(exclude_none=True), partner=partner.inviteCode, isPremium=isPremium)
-            # partner.users.append(new_user)
             session.add(new_user)
             session.add(partner)
             await session.commit()
+            daily_activity = await activity.get_or_create_daily_activity(session)
+            await activity.update_daily_activity_partner_users_created(session, daily_activity)
         else:
             stmt = select(Account).filter(Account.inviteCode == inviteCode)
             result = await session.execute(stmt)
             oneWhoInvited = result.scalars().first()
             new_user = User(**user.model_dump(exclude_none=True), isPremium=isPremium)
+            session.add(new_user)
+            await session.commit()
 
                 # oneWhoInvited.reffers.append(new_user)
             refferAccount = RefferAccount(id=user.id, oneWhoInvited=oneWhoInvited.id) if oneWhoInvited else None
 
             if refferAccount:
-                session.add(refferAccount)
+                session.add(refferAccount)   
+                daily_activity = await activity.get_or_create_daily_activity(session)
+                await activity.update_daily_activity_reffered_users_entered(session, daily_activity)
+
             session.add(new_user)
             await session.commit()
     else:
         new_user = User(**user.model_dump(exclude_none=True), isPremium=isPremium)
         session.add(new_user)
         await session.commit()
+
+    daily_activity = await activity.get_or_create_daily_activity(session)
+    await activity.update_daily_activity_new_users_entered(session, daily_activity)
+    await activity.update_daily_activity_users_entered(session, daily_activity)
 
     new_invite_code = base64.b64encode(str(user.id).encode('ascii')).decode('ascii')
     new_account = Account(id=user.id, inviteCode=new_invite_code)

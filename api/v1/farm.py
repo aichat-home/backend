@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import Farm, Reward
 from db import database
-from utils import validate_dependency, user as user_crud
+from utils import validate_dependency, user as user_crud, activity
 from core import settings
 from background_tasks import tasks
 
@@ -32,6 +32,8 @@ async def start_farm(
         background_tasks.add_task(tasks.send_farm_claim_notification, user.get('id'))
         farm = Farm(status='Process', wallet=user.get('id'), created_at=datetime.now(), updated_at=datetime.now())
         session.add(farm) 
+        daily_activity = await activity.get_or_create_daily_activity(session)
+        await activity.update_daily_activity_farm_started(session, daily_activity)
         await session.commit()
 
     reward = await session.get(Reward, user.get('id'))

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from utils import user as user_crud, validate_dependency, check_streak, already_claimed_today, task
+from utils import user as user_crud, validate_dependency, check_streak, already_claimed_today, task, activity
 from schemas import UserCreate, UserCreateBody, GetOrCreate, SaveWallet
 from db import database
 from models import User, Reward, Wallet
@@ -37,6 +37,14 @@ async def get_or_create(
             if reward.day >= 8:
                 reward.day = 1
             await session.commit()
+        if db_user.lastLogin is None:
+            db_user.lastLogin = datetime.now()
+            await session.commit()
+            daily_activity = await activity.get_or_create_daily_activity(session)
+            await activity.update_daily_activity_users_entered(session, daily_activity)
+        elif db_user.lastLogin.day != datetime.now().day:
+            daily_activity = await activity.get_or_create_daily_activity(session)
+            await activity.update_daily_activity_users_entered(session, daily_activity)
         return {
             'id': db_user.id,
             'first_name': db_user.first_name,
@@ -144,3 +152,6 @@ async def save_wallet_address(
         wallet.wallet_address = save_wallet.address
         wallet.wallet_type = save_wallet.name
         await session.commit()
+        
+        daily_activity = await activity.get_or_create_daily_activity(session)
+        await activity.update_daily_activity_connected_wallets(session, daily_activity)

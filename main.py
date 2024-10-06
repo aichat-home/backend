@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
         pass
 
 
-app = FastAPI(lifespan=lifespan, openapi_url='')
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(router=router, prefix='/api', dependencies=[Depends(validate_dependency)])
 app.include_router(router=partners_api_router, prefix='/api')

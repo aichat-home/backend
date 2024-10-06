@@ -39,6 +39,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(Text, nullable=True, index=True)
     isPremium: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     role: Mapped[str] = mapped_column(String(255), default='REGULAR', nullable=False)
+    lastLogin: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(), nullable=True)
     partner: Mapped[str] = mapped_column(ForeignKey('partners.inviteCode'), nullable=True)
 
     Partner: Mapped['Partner'] = relationship('Partner', back_populates='users')
@@ -58,7 +59,7 @@ class Account(Base):
     inviteCode: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     level: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     heSeeWelcomeScreen: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    reffers_checked: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    reffers_checked: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
 
     user: Mapped['User'] = relationship('User', back_populates='account')
     reffers: Mapped[list['RefferAccount']] = relationship('RefferAccount', back_populates='OneWhoInvited')
