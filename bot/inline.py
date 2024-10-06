@@ -17,7 +17,7 @@ def inline_builder(webapp_url: str, user_id: int) -> InlineKeyboardBuilder:
                 )
     builder.row(InlineKeyboardButton(
                     text='😎 Invite Friends',
-                    url=f'https://t.me/share/url?url=https://t.me/webapptesst_bot/Dapp?startapp={invite_code}&text=Hey! Join this amazing app and earn rewards together!'
+                    url=f'https://t.me/share/url?url=https://t.me/BeamTapBot/Dapp?startapp={invite_code}&text=Hey! Join this amazing app and earn rewards together!'
                     ),
                     InlineKeyboardButton(
                     text='🤠 Join Community',
