@@ -112,6 +112,7 @@ async def get_me(session: AsyncSession = Depends(database.get_async_session), us
         rewards_response.append({'reward': reward, 'claimed': claimed, 'count': count})
 
     user.updated_at = datetime.now()
+    await session.merge(user)
     await session.commit()
 
     return {

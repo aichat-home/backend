@@ -90,6 +90,7 @@ async def create_user(user: UserCreate, inviteCode: str, isPremium: bool, sessio
     else:
         new_user = User(**user.model_dump(exclude_none=True), isPremium=isPremium)
         session.add(new_user)
+        await session.commit()
 
     new_invite_code = base64.b64encode(str(user.id).encode('ascii')).decode('ascii')
     new_account = Account(id=user.id, inviteCode=new_invite_code)
