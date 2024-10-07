@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, Enum, Text, DateTime, String
+from sqlalchemy import BigInteger, Boolean, Text, DateTime, String, LargeBinary
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from sqlalchemy import Integer, Text, ForeignKey, DOUBLE_PRECISION, BigInteger, Boolean
@@ -125,11 +125,39 @@ class Wallet(Base):
     user: Mapped['User'] = relationship('User', back_populates='wallet')
     reward: Mapped['Reward'] = relationship('Reward', back_populates='wallet')
     farm: Mapped['Farm'] = relationship('Farm', back_populates='Wallet')
+    solana_wallet: Mapped['SolanaWallet'] = relationship('SolanaWallet', back_populates='Wallet')
 
     def __str__(self) -> str:
         return str(self.id)
-    
-        
+
+
+class SolanaWallet(Base):
+    __tablename__ ='solana_wallets'
+
+    id: Mapped[int] = mapped_column(Integer, autoincrement=True)
+    wallet: Mapped[int] = mapped_column(BigInteger, ForeignKey('wallets.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True, index=True)
+    public_key: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    encrypted_private_key: Mapped[str] = mapped_column(LargeBinary, nullable=False, index=True)
+    sol_balance: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    number_of_trades: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    number_od_snipes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    token_balances: Mapped[list['TokenBalance']] = relationship('TokenBalance', back_populates='SolanaWallet')
+
+    Wallet: Mapped['Wallet'] = relationship('Wallet', back_populates='solana_wallet')
+
+
+class TokenBalance(Base):
+    __tablename__ = 'token_balances'
+
+    id: Mapped[int] = mapped_column(Integer, autoincrement=True)
+    solana_wallet: Mapped[str] = mapped_column(ForeignKey('solana_wallets.wallet', onupdate='CASCADE', ondelete='CASCADE'), nullable=False, primary_key=True, index=True)
+    token_address: Mapped[str] = mapped_column(String(255), nullable=False)
+    token_symbol: Mapped[str] = mapped_column(String(255), nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    SolanaWallet: Mapped['SolanaWallet'] = relationship('SolanaWallet', back_populates='token_balances')
+
+
 class Reward(Base):
     __tablename__ = 'rewards'
 

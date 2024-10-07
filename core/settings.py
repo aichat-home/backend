@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     admin_password: str
     farm_seconds: int
     farm_reward: int
+    encryption_key: str
 
     model_config: SettingsConfigDict = SettingsConfigDict(
         env_file='.env',
