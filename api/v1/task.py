@@ -6,11 +6,15 @@ from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from aiogram.enums.chat_member_status import ChatMemberStatus
+from bot import bot
+
 from models import Task, Account
 from db import database
 from schemas import TaskCheck
 from utils import validate_dependency, user as user_crud, task
 from cache import cache_manager
+from core import settings
 
 
 
@@ -57,12 +61,25 @@ async def check_task(
     if task in account.completedTasks:
         raise HTTPException(status_code=400, detail="Task already completed by this account")
 
-    account.completedTasks.append(task)
+    completed = False
+    if task.chatId:
+        try:
+            chat_member = await bot.get_chat_member(task.chatId, user.get('id'))
+            if chat_member.status in (ChatMemberStatus.MEMBER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.CREATOR):
+                completed = True
+        except Exception as e:
+            print(f'Error getting chat member for task {task.id}: {e}')
+    else:
+        completed = True
 
-    # Update wallet balance
-    await user_crud.update_wallet(session, user.get('id'), task.amount)
+    if completed:
+        account.completedTasks.append(task)
+        await session.commit()
+        await user_crud.update_wallet(session, user.get('id'), task.amount)
 
-    return {"completed": True}
+
+
+    return {"completed": completed}
 
 
 @router.post('/check/referral')
