@@ -6,7 +6,7 @@ def already_claimed_today(last_claimed: datetime) -> bool:
         return True
     now = datetime.now()
     
-    return last_claimed.date() == now.date()
+    return last_claimed.day == now.day
 
 
 def calculate_reward(streak: int) -> int:
@@ -19,4 +19,4 @@ def check_streak(last_claimed: datetime) -> bool:
     if not last_claimed:
         return False
     now = datetime.now()
-    return now - last_claimed >= timedelta(days=1)
+    return now.day - last_claimed.day != 1
