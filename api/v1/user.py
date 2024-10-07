@@ -45,6 +45,7 @@ async def get_or_create(
         elif db_user.lastLogin.day != datetime.now().day:
             daily_activity = await activity.get_or_create_daily_activity(session)
             await activity.update_daily_activity_users_entered(session, daily_activity)
+        db_user.lastLogin = datetime.now()
         return {
             'id': db_user.id,
             'first_name': db_user.first_name,
