@@ -25,7 +25,7 @@ dp = Dispatcher()
 
 ADMIN_IDS = (540314239, 1795945549)
 
-photo = FSInputFile('bot/media/start.jpg')
+photo = FSInputFile('bot/media/start.png')
 notification_photo = FSInputFile('bot/media/notification.jpg')
 
 
@@ -57,9 +57,11 @@ class DbSessionMiddleware(BaseMiddleware):
 
 @dp.message(CommandStart())
 async def start(message: Message):
-    text = ('👽 Welcome to the world of BeamBot 🚀\n\n'
-            'Calling all humanoids, the depths of space are yours to fight for, set to the tune of cryptocurrency and special missions... 🌒\n'
-            'As an ambitious galactic explorer, you find yourself on the verge of riches and wealth, where collecting crystals and coins will line your pockets with the most expensive space dust... 🌌'
+    text = ("BeamBot's unique value stems from its seemless and revolutionary one-click trading experience and market-leading artifical intelligence agents.\n\n"
+            
+            "It boasts an ultra-simplified UI, set within a custom-built Mini-App and platform, along with AI agents capable of offering users enhanced trading security, asset analysis and market tracking prior to placing an order. These agents are able to trade assets by themselves, autonomously, whilst users passively reap the rewards. What's more, Beambot offers a dedicated platform that enables agents to be uploaded and speculated on by community members the same way a token is, valued by their utility and popularity. \n\n"
+
+            "As a result, BeamBot provides an innovative and superior option to the complex, slow alternatives that fail to efficiently integrate within Telegram's high-potential platform."
             )
     
     
