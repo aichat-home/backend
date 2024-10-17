@@ -11,6 +11,11 @@ class Settings(BaseSettings):
     admin_password: str
     farm_seconds: int
     farm_reward: int
+    encryption_key: str
+    solana_fee: int
+    program_fee_percentage: float
+    admin_wallet_address: str
+
 
     model_config: SettingsConfigDict = SettingsConfigDict(
         env_file='.env',

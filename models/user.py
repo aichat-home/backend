@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, Enum, Text, DateTime, String
+from sqlalchemy import BigInteger, Boolean, Float, Text, DateTime, String, LargeBinary
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from sqlalchemy import Integer, Text, ForeignKey, DOUBLE_PRECISION, BigInteger, Boolean
@@ -41,6 +41,8 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(255), default='REGULAR', nullable=False)
     lastLogin: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(), nullable=True)
     partner: Mapped[str] = mapped_column(ForeignKey('partners.inviteCode'), nullable=True)
+    buy_slippage: Mapped[float] = mapped_column(Float, nullable=True, default=5)
+    sell_slippage: Mapped[float] = mapped_column(Float, nullable=True, default=5)
 
     Partner: Mapped['Partner'] = relationship('Partner', back_populates='users')
     account: Mapped['Account'] = relationship('Account', back_populates='user')
@@ -125,11 +127,57 @@ class Wallet(Base):
     user: Mapped['User'] = relationship('User', back_populates='wallet')
     reward: Mapped['Reward'] = relationship('Reward', back_populates='wallet')
     farm: Mapped['Farm'] = relationship('Farm', back_populates='Wallet')
+    solana_wallets: Mapped[list['SolanaWallet']] = relationship('SolanaWallet', back_populates='Wallet')
 
     def __str__(self) -> str:
         return str(self.id)
     
         
+class SolanaWallet(Base):
+    __tablename__ = 'solana_wallets'
+    
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    wallet: Mapped[int] = mapped_column(BigInteger, ForeignKey('wallets.id'), nullable=False, index=True)
+    public_key: Mapped[str] = mapped_column(Text, nullable=False, index=True)
+    encrypted_private_key: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    number_of_trades: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    number_of_snipes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    trading_points_earned: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    commision_earned: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+
+    Wallet: Mapped['Wallet'] = relationship('Wallet', back_populates='solana_wallets')
+    withdraws: Mapped[list['Withdraw']] = relationship('Withdraw', back_populates='Wallet')
+    swaps: Mapped[list['Swap']] = relationship('Swap', back_populates='Wallet')
+
+
+class Withdraw(Base):
+    __tablename__ = 'withdraws'
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    wallet: Mapped[int] = mapped_column(BigInteger, ForeignKey('solana_wallets.id'), nullable=False, index=True)
+    mint: Mapped[str] = mapped_column(Text, nullable=False)
+    receiver_address: Mapped[str] = mapped_column(Text, nullable=False)
+    amount: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+    Wallet: Mapped['SolanaWallet'] = relationship('SolanaWallet', back_populates='withdraws')
+
+
+class Swap(Base):
+    __tablename__ = 'swaps'
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    wallet: Mapped[int] = mapped_column(BigInteger, ForeignKey('solana_wallets.id'), nullable=False, index=True)
+    input_mint: Mapped[str] = mapped_column(Text, nullable=False)
+    output_mint: Mapped[str] = mapped_column(Text, nullable=False)
+    input_amount: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    output_amount: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    status: Mapped[str] = mapped_column(String(255), nullable=False)
+    date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+    Wallet: Mapped['SolanaWallet'] = relationship('SolanaWallet', back_populates='swaps')
+
+
 class Reward(Base):
     __tablename__ = 'rewards'
 
