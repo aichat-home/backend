@@ -4,8 +4,9 @@ from aiogram.fsm.state import StatesGroup, State
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from utils import wallet, swap
+from utils import swap, market
 from models import User
+from rpc import client
 from bot.keyboards import swap_confirmation, to_home
 from bot.image import start_photo
 
@@ -24,8 +25,7 @@ async def buy_token(message: Message, state: FSMContext, session: AsyncSession):
     token_data = data.get('token_data', {})
     db_wallet = data.get('db_wallet')
 
-    token = await wallet.get_token(db_wallet.public_key, token_data['address'])
-    mint, balance, decimals = wallet.parse_token_mint_address_amount_decimals(token.value[0])
+    decimals = await market.get_token_decimals(client, token_data['address'])
 
     await state.update_data(
     input_mint='So11111111111111111111111111111111111111112', 
@@ -57,7 +57,7 @@ async def buy_token(message: Message, state: FSMContext, session: AsyncSession):
             )
             
         except ValueError:
-            await message.answer('Invalid amount. Please enter a number.', reply_markup=to_home())
+            await message.answer_photo(photo=start_photo, caption='Invalid amount. Please enter a number.', reply_markup=to_home())
             return
     
     

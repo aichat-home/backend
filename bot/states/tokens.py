@@ -37,28 +37,41 @@ async def handle_token(message: Message, state: FSMContext, session: AsyncSessio
         if token_data:
             db_wallet = await wallet.get_wallet_by_id(session, message.from_user.id)
             balance = await wallet.get_wallet_balance(db_wallet.public_key)
-            text = (
-            f'Buy <a href="https://solscan.io/token/{token}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
-            f'💳 My Balance: <code>{balance} SOL</code>\n\n'
+            if token_data.get('time_passed'):
+                text = (
+                    f'{token_data["name"]} <code>({token_data["symbol"]})</code>\n'
+                    f'Creator: <code>{token_data["creator"]} - {token_data["time_passed"]}</code>\n\n'
+                    f'💳 My Balance: <code>{balance} SOL</code>\n\n'
 
-            f'💸  Price: {token_data["price"]}\n'
-            f'💵  MCap: ${market.format_number(token_data["market_cap"])}\n'
-            f'🔎  24h: {token_data["h24"]:.4f}%\n'
-            f'💰  Liqudity: ${market.format_number(token_data["liquidity"])}\n'
-        )
+                    f'💸  Price: <code>${token_data["price"]}</code>\n'
+                    f'💵  MCap: <code>${market.format_number(token_data["usd_market_cap"])}</code>\n'
+                )
+                banner = start_photo
+            else:
+                text = (
+                    f'Buy <a href="https://solscan.io/token/{token}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
+                    f'💳 My Balance: <code>{balance} SOL</code>\n\n'
+
+                    f'💸  Price: {token_data["price"]}\n'
+                    f'💵  MCap: ${market.format_number(token_data["market_cap"])}\n'
+                    f'🔎  24h: {token_data["h24"]:.4f}%\n'
+                    f'💰  Liqudity: ${market.format_number(token_data["liquidity"])}\n'
+                )
+
+                image_buffer = image.create_image(
+                    symbol=f"{token_data['symbol']}",
+                    price=f"${token_data['price']}",
+                    market_cap=f"${market.format_number(token_data['market_cap'])}",
+                    change=f"{token_data['h24']:.3f}%",
+                    liquidity=f"${market.format_number(token_data['liquidity'])}",
+                    background_path='bg.png'
+                )
+
+                banner = BufferedInputFile(image_buffer.getvalue(), filename="price_image.png")
+
+
             reply_markup = buy_keyboard(token)
             await state.update_data(token_data=token_data)
-
-            image_buffer = image.create_image(
-                symbol=f"{token_data['symbol']}",
-                price=f"${token_data['price']}",
-                market_cap=f"${market.format_number(token_data['market_cap'])}",
-                change=f"{token_data['h24']:.3f}%",
-                liquidity=f"${market.format_number(token_data['liquidity'])}",
-                background_path='bg.png'
-            )
-
-            banner = BufferedInputFile(image_buffer.getvalue(), filename="price_image.png")
 
         else:
             text = "Token not found."

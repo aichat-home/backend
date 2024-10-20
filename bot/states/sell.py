@@ -41,26 +41,26 @@ async def sell_token(message: Message, state: FSMContext, session: AsyncSession)
         try:
             amount = float(text)
             if amount > balance:
-                await message.answer('Amount exceeds your balance.', reply_markup=to_home())
+                await message.answer_photo(photo=start_photo, caption='Amount exceeds your balance.', reply_markup=to_home())
                 return
             await state.update_data(amount=amount)
             await state.set_state(SellState.confirmation.state)
         except ValueError:
-            await message.answer('Invalid amount. Please enter a number.', reply_markup=to_home())
+            await message.answer_photo(photo=start_photo, caption='Invalid amount. Please enter a number.', reply_markup=to_home())
             return
     elif current_state == SellState.percent.state:
         text = message.text
         try:
             percent = float(text)
             if percent <= 0 or percent > 100:
-                await message.answer('Percent must be between 0 and 100.', reply_markup=to_home())
+                await message.answer_photo(photo=start_photo, caption='Percent must be between 0 and 100.', reply_markup=to_home())
                 return
             amount = balance * (percent / 100)
             
             await state.update_data(amount=amount)
             await state.set_state(SellState.confirmation.state)
         except ValueError:
-            await message.answer('Invalid percent. Please enter a number.', reply_markup=to_home())
+            await message.answer_photo(photo=start_photo, caption='Invalid percent. Please enter a number.', reply_markup=to_home())
             return
     db_user = await session.get(User, message.from_user.id)
 

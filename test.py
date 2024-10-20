@@ -1,27 +1,24 @@
 import asyncio
-import base58
+from utils import pump
+from datetime import datetime, timezone
 
 from solders.pubkey import Pubkey # type: ignore
 
 from session import get_session, init_session
-
-
+from utils import swap
+from spl.token.constants import WRAPPED_SOL_MINT
+from rpc import client
 
 
 async def main():
     init_session()
     session = get_session()
+    # print(await pump.get_pump_token_info(session, '4YnTnXGvRV9vLiae6LM7f5FdKssJeDfTic9nzeKEpump'))
     
-    fee_token_account = Pubkey.find_program_address(
-            [
-                b'referral_ata',
-                bytes(Pubkey.from_string('3hf1aGtRFdUZtjsej149KTVMsftbv4TRfndtGMJKdVdb')),
-                bytes(Pubkey.from_string('JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN'))
-            ],
-            program_id=Pubkey.from_string('REFER4ZgmyYx9c6He5XfaTMiGfdLwRnkV4RPp9t9iF3')
-        )
-    
-    print(fee_token_account[0].to_json())    
+    response = await client.get_account_info_json_parsed(Pubkey.from_string('95Pb7UEfqx1SyPAZJmfB8BCdZeekf6z16zj2Y8yKG5Jb'))
+    print(response.value.data.parsed['info']['decimals'])
+
+    await session.close()
 
 
 asyncio.run(main())

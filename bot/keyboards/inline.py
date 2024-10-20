@@ -4,7 +4,6 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from models import User
-from bot.callbacks.factory import TokenCallback
 
 
 start_keyboard = InlineKeyboardMarkup(
@@ -23,6 +22,9 @@ start_keyboard = InlineKeyboardMarkup(
         ],
         [
             InlineKeyboardButton(text='Pump.fun', callback_data='pump.fun'),
+            InlineKeyboardButton(text='Sniper Bot', callback_data='sniper_bot'),
+        ],
+        [
             InlineKeyboardButton(text='🔄 Refresh', callback_data='home')
         ]
     ],
@@ -38,7 +40,7 @@ cancel_keyboard = InlineKeyboardMarkup(
     )
 
 
-def buy_keyboard(token_address):
+def buy_keyboard(token_address, refresh_prefix='token'):
     builder = InlineKeyboardBuilder()
     cancel_button = InlineKeyboardButton(text='❌ Cancel', callback_data='home')
     builder.row(cancel_button, width=1)
@@ -52,7 +54,7 @@ def buy_keyboard(token_address):
     buy_x_sol = InlineKeyboardButton(text='💵 Buy X SOL', callback_data=f'buy_x_{token_address}')
     builder.row(buy_1_sol, buy_5_sol, buy_x_sol, width=3)
 
-    refresh_button = InlineKeyboardButton(text='🔄 Refresh', callback_data=f'token_{token_address}')
+    refresh_button = InlineKeyboardButton(text='🔄 Refresh', callback_data=f'{refresh_prefix}_{token_address}')
     builder.row(refresh_button, width=1)
 
     return builder.as_markup()
@@ -210,16 +212,7 @@ def pump_keyboard(tokens: list[dict]):
 
             creation_time = token['creation_time']
             mint, symbol = token['mint'], token['symbol']
-            token_button = InlineKeyboardButton(text=f'{symbol} - {(datetime.now() - creation_time).seconds}s ago', callback_data=TokenCallback(
-                mint=mint,
-                name=token['name'],
-                symbol=symbol,
-                market_cap_sol=token['marketCapSol'],
-                v_sol_in_bonding_curve=token['vSolInBondingCurve'],
-                v_tokens_in_bondnig_curve=token['vTokensInBondingCurve'],
-                creation_time=datetime.now(),
-                trader_public_key=token['traderPublicKey']
-            ))
+            token_button = InlineKeyboardButton(text=f'{symbol} - {(datetime.now() - creation_time).seconds}s ago', callback_data=f'pump_{mint}')
             builder.row(token_button, width=1)
 
     refresh_button = InlineKeyboardButton(text='🔄 Refresh', callback_data='pump.fun')

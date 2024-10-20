@@ -25,6 +25,5 @@ async def refresh(callback_query: CallbackQuery, session: AsyncSession):
             reply_markup=start_keyboard
         )
     except Exception as e:
-        print(e)
-
+        pass
     await callback_query.answer()

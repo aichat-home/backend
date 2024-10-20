@@ -1,5 +1,9 @@
 from aiohttp import ClientSession
+from solana.rpc.async_api import AsyncClient
 
+from solders.pubkey import Pubkey # type: ignore
+
+from . import pump
 from cache import simple_cache
 
 
@@ -35,7 +39,6 @@ async def get_token_data_by_address(session: ClientSession, address: str) -> dic
     if data:
         return data
 
-
     url = f'https://api.dexscreener.com/latest/dex/tokens/{address}'
     
     async with session.get(url) as response:
@@ -48,8 +51,26 @@ async def get_token_data_by_address(session: ClientSession, address: str) -> dic
         token_data['address'] = address
         simple_cache.set(f'token_data_{address}', token_data, 10)
         return token_data
+    
+    # data = await pump.get_pump_token_info(session, address)
+    # if data:
+    #     return data
 
     return None
+
+async def get_token_decimals(client: AsyncClient, address: str):
+    '''Getting token decimals by address
+    Uses Solana RPC to fetch token decimals.
+    '''
+    decimals = simple_cache.get(f'token_decimals_{address}')
+    if decimals:
+        return decimals
+    
+    response = await client.get_account_info_json_parsed(Pubkey.from_string('95Pb7UEfqx1SyPAZJmfB8BCdZeekf6z16zj2Y8yKG5Jb'))
+    if response:
+        decimals = response.value.data.parsed['info']['decimals']
+        simple_cache.set(f'token_decimals_{address}', decimals, 3600)
+        return decimals
 
 
 def get_need_data_from_pair(pair: dict):

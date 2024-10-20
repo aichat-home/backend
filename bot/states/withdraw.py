@@ -61,9 +61,9 @@ async def withdraw_state(state: FSMContext, message: Message, session: AsyncSess
             confirmation = await client.confirm_transaction(tx_sig, commitment=Finalized, sleep_seconds=5)
             if confirmation.value:
                 if confirmation.value[0].confirmation_status == TransactionConfirmationStatus.Finalized:
-                    await message.answer(text='Transaction went successfull', reply_markup=to_home())
+                    await message.answer_photo(photo=start_photo, caption='Transaction went successfull', reply_markup=to_home())
                     await state.clear()
         except Exception as e:
             print(e)
-            await message.answer(text='Transaction failed', reply_markup=to_home())
+            await message.answer_photo(photo=start_photo, caption='Transaction failed', reply_markup=to_home())
             return
