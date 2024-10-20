@@ -15,13 +15,13 @@ async def waiting_for_message(message: Message, state: FSMContext, session: Asyn
     current_state = await state.get_state()
     if current_state:
         if current_state in (withdraw.WithdrawState.amount, withdraw.WithdrawState.receiver_address):
-            await withdraw.withdraw_state(state, message)
+            await withdraw.withdraw_state(state, message, session)
             return
         elif current_state in (settings.SlippageState.buy_slippage, settings.SlippageState.sell_slippage):
             await settings.change_slippage(message, state, session)
             return
         elif current_state in (buy.BuyState.amount, buy.BuyState.confirmation):
-            await buy.buy_token(message, state)
+            await buy.buy_token(message, state, session)
             return
         elif current_state in (sell.SellState.amount, sell.SellState.percent, sell.SellState.confirmation):
             await sell.sell_token(message, state, session)

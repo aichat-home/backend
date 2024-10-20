@@ -1,8 +1,10 @@
+from datetime import datetime
+
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from models import User
-
+from bot.callbacks.factory import TokenCallback
 
 
 start_keyboard = InlineKeyboardMarkup(
@@ -20,6 +22,7 @@ start_keyboard = InlineKeyboardMarkup(
             InlineKeyboardButton(text='⚙️ Settings', callback_data='settings')
         ],
         [
+            InlineKeyboardButton(text='Pump.fun', callback_data='pump.fun'),
             InlineKeyboardButton(text='🔄 Refresh', callback_data='home')
         ]
     ],
@@ -44,8 +47,8 @@ def buy_keyboard(token_address):
     chart_button = InlineKeyboardButton(text='Chart', url=f'https://dexscreener.com/solana/{token_address}?id=viqdmf33')
     builder.row(explorer_button, chart_button, width=2)
 
-    buy_1_sol = InlineKeyboardButton(text='💲 Buy 1.0 SOL', callback_data=f'buy_1_{token_address}')
-    buy_5_sol = InlineKeyboardButton(text='💸 Buy 5.0 SOL', callback_data=f'buy_5_{token_address}')
+    buy_1_sol = InlineKeyboardButton(text='💲 Buy 0.5 SOL', callback_data=f'buy_0.5_{token_address}')
+    buy_5_sol = InlineKeyboardButton(text='💸 Buy 1.0 SOL', callback_data=f'buy_1_{token_address}')
     buy_x_sol = InlineKeyboardButton(text='💵 Buy X SOL', callback_data=f'buy_x_{token_address}')
     builder.row(buy_1_sol, buy_5_sol, buy_x_sol, width=3)
 
@@ -131,13 +134,20 @@ def settings_keyboard(user: User):
     to_home  = InlineKeyboardButton(text='⬅ Back to Home', callback_data='home')
     builder.row(to_home, width=1)
 
-    slippage_config = InlineKeyboardButton(text='---SLIPPAGE CONFIG---', callback_data='slippage_config_none')
+    slippage_config = InlineKeyboardButton(text='Slippage', callback_data='slippage_config_none')
     builder.row(slippage_config, width=1)
 
     buy_slippage = InlineKeyboardButton(text=f'Buy: {user.buy_slippage}%', callback_data='slippage_config_buy')
     sell_slippage = InlineKeyboardButton(text=f'Sell: {user.sell_slippage}%', callback_data='slippage_config_sell')
     builder.row(buy_slippage, sell_slippage, width=2)
-    
+
+    extra_confirmation = InlineKeyboardButton(text='Extra confirmation', callback_data='none')
+    builder.row(extra_confirmation, width=1)
+
+    confirmation = InlineKeyboardButton(text=f'{"True" if user.extra_confirmation else "False"}', callback_data='change_confirmation')
+    builder.row(confirmation, width=1)
+
+
     return builder.as_markup()
 
 
@@ -187,5 +197,33 @@ def sell_token(token_address):
 
     refresh_button = InlineKeyboardButton(text='🔄 Refresh', callback_data=f'show_sell_{token_address}')
     builder.row(refresh_button, width=1)
+
+    return builder.as_markup()
+
+
+def pump_keyboard(tokens: list[dict]):
+    builder = InlineKeyboardBuilder()
+
+    tokens.sort(key = lambda token: token['creation_time'])
+    for token in tokens:
+        if token.get('name'):
+
+            creation_time = token['creation_time']
+            mint, symbol = token['mint'], token['symbol']
+            token_button = InlineKeyboardButton(text=f'{symbol} - {(datetime.now() - creation_time).seconds}s ago', callback_data=TokenCallback(
+                mint=mint,
+                name=token['name'],
+                symbol=symbol,
+                market_cap_sol=token['marketCapSol'],
+                v_sol_in_bonding_curve=token['vSolInBondingCurve'],
+                v_tokens_in_bondnig_curve=token['vTokensInBondingCurve'],
+                creation_time=datetime.now(),
+                trader_public_key=token['traderPublicKey']
+            ))
+            builder.row(token_button, width=1)
+
+    refresh_button = InlineKeyboardButton(text='🔄 Refresh', callback_data='pump.fun')
+    to_home = InlineKeyboardButton(text='To Home', callback_data='home')
+    builder.row(refresh_button, to_home, width=2)
 
     return builder.as_markup()

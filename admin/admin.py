@@ -8,7 +8,7 @@ from sqladmin import Admin, ModelView
 from sqladmin.authentication import AuthenticationBackend
 
 from db import database
-from models import User, Account, Wallet, Farm, Partner, Task, Reward, RefferAccount, Add, Activity, DailyActivity
+from models import User, Account, Wallet, Farm, Partner, Task, Reward, RefferAccount, Add, Activity, DailyActivity, SolanaWallet, Swap, Withdraw
 from core import settings
 
 
@@ -75,7 +75,7 @@ class PartnerView(ModelView, model=Partner):
 def create_admin(app):
     authentication_backend = AdminAuth(secret_key=settings.telegram_token)
     admin = Admin(app=app, engine=database.engine, authentication_backend=authentication_backend)
-    [admin.add_view(create_view(model)) for model in [User, Account, Wallet, Farm, Reward, RefferAccount, Add, Activity, DailyActivity]]
+    [admin.add_view(create_view(model)) for model in [User, Account, Wallet, Farm, Reward, RefferAccount, Add, Activity, DailyActivity, SolanaWallet, Swap, Withdraw]]
     admin.add_view(TaskView)
     admin.add_view(PartnerView)
 

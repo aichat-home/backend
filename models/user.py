@@ -43,6 +43,7 @@ class User(Base):
     partner: Mapped[str] = mapped_column(ForeignKey('partners.inviteCode'), nullable=True)
     buy_slippage: Mapped[float] = mapped_column(Float, nullable=True, default=5)
     sell_slippage: Mapped[float] = mapped_column(Float, nullable=True, default=5)
+    extra_confirmation: Mapped[bool] = mapped_column(Boolean, nullable=True, default=False)
 
     Partner: Mapped['Partner'] = relationship('Partner', back_populates='users')
     account: Mapped['Account'] = relationship('Account', back_populates='user')

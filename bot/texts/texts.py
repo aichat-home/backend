@@ -10,16 +10,6 @@ START_TEXT = ('Welcome to BeamBot Trading Bot \n\n'
     '➤ <a href="https://t.me/BeambotXYZ">Telegram</a> | 𝕏  <a href="https://x.com/BeamBotXYZ">X.com</a>')
 
 
-TOKEN_TEXT = ('<b>{symbol}</b> | <i>{name}</i> | '
-            '<code>{address}</code>\n\n'
-            'Price: <b>{price}</b>\n'
-            'Decimals: <b>{decimals}</b>\n\n'
-            'Market Cap: <b>{market_cap}</b>\n'
-            'Total Volume: <b>{total_volume}</b>\n'
-            'Price Change 24h: <b>{price_change_percentage_24h}</b>'
-            )
-
-
 CONFIRMATION_TEXT = ('Are you sure you want to export your <b>Private Key?</b>\n\n'
 
         '<b>🚨WARNING: Never share your private key! 🚨</b>\n'
@@ -47,7 +37,10 @@ HELP_TEXT = ('Help:\n\n'
 SUCCESSFULL_TRANSACTION = (
     'Transaction Successful! 🎉\n\n'
 
-    '{input_symbol} ({in_amount}) ⟶ {output_symbol} ({out_amount})\n\n'
+    '{input_symbol} ({in_amount}) ⟶ {output_symbol} ({out_amount})\n'
+    'Platforms: {platforms}\n\n'
+
+    'You get {trading_points} Trading points\n\n'
 
     'Thank you for choosing our service! 😊'
     )

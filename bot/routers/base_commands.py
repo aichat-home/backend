@@ -39,6 +39,10 @@ async def start(message: Message, session: AsyncSession):
         user.buy_slippage = 5
         await session.commit()
 
+    if user.extra_confirmation is None:
+        user.extra_confirmation = False
+        await session.commit()
+
     db_wallet = await wallet.get_wallet_by_id(session, message.from_user.id)
 
     if not db_wallet:

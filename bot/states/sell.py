@@ -6,7 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.keyboards import swap_confirmation, to_home
 from bot.image import start_photo
-from utils import wallet, market
+from utils import wallet, swap
+from models import User
+
 
 
 class SellState(StatesGroup):
@@ -28,7 +30,8 @@ async def sell_token(message: Message, state: FSMContext, session: AsyncSession)
     mint, balance, decimals = wallet.parse_token_mint_address_amount_decimals(token.value[0])
 
     await state.update_data(
-        decimals=decimals, 
+        input_decimals=decimals, 
+        output_decimals=9,
         input_mint=mint, 
         output_mint='So11111111111111111111111111111111111111112'
         )
@@ -59,9 +62,22 @@ async def sell_token(message: Message, state: FSMContext, session: AsyncSession)
         except ValueError:
             await message.answer('Invalid percent. Please enter a number.', reply_markup=to_home())
             return
-        
-    await message.answer_photo(
-        photo=start_photo, 
-        caption=f'You are about to sell {amount} {token_data["symbol"].upper()} for SOL. Please confirm.',
-        reply_markup=swap_confirmation()
-    )
+    db_user = await session.get(User, message.from_user.id)
+
+    if db_user.extra_confirmation:
+        await message.answer_photo(
+            photo=start_photo, 
+            caption=f'You are about to sell {amount} {token_data["symbol"].upper()} for SOL. Please confirm.',
+            reply_markup=swap_confirmation()
+        )
+        return
+    
+    await swap.make_swap_with_message(
+                message=message,
+                db_wallet=db_wallet,
+                user_id=message.from_user.id,
+                token_data=token_data,
+                data=await state.get_data(),
+                session=session
+            )
+

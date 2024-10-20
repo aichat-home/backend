@@ -1,22 +1,15 @@
-from datetime import datetime
-
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from solders.transaction_status import TransactionConfirmationStatus # type: ignore
-from solana.rpc.commitment import Finalized
-
 from utils import wallet, market, swap
-from models import User, Swap
-from rpc import client
+from models import User
 from session import get_session
 from bot.keyboards import swap_confirmation, cancel_keyboard, to_home
 from bot.states import tokens
 from bot.states import buy, sell
-from bot.texts import texts
 
 
 
@@ -57,16 +50,38 @@ async def buy_token(callback_query: CallbackQuery, state: FSMContext, session: A
         return
     else:
         if float(amount) <= balance:
-            amount = balance
+            amount = float(amount)
             await state.update_data(amount=amount)
             await state.set_state(buy.BuyState.confirmation)
 
-            await callback_query.message.edit_caption(caption=
-                f'You are about to buy {token_data["symbol"].upper()} for {amount} SOL . Please confirm.',
-                reply_markup=swap_confirmation()
+            db_user = await session.get(User, callback_query.from_user.id)
+
+            token = await wallet.get_token(db_wallet.public_key, token_data['address'])
+            _, _, decimals = wallet.parse_token_mint_address_amount_decimals(token.value[0])
+
+            await state.update_data(
+                input_mint='So11111111111111111111111111111111111111112', 
+                output_mint=token_data.get('address'),
+                input_decimals=9,
+                output_decimals=decimals
             )
-            await callback_query.answer()
-            return
+
+            if db_user.extra_confirmation:
+                await callback_query.message.edit_caption(caption=
+                    f'You are about to buy {token_data["symbol"].upper()} for {amount} SOL . Please confirm.',
+                    reply_markup=swap_confirmation()
+                )
+                await callback_query.answer()
+                return
+            await swap.make_swap_with_callback(
+                callback_query=callback_query,
+                db_wallet=db_wallet,
+                user_id=callback_query.from_user.id,
+                data=await state.get_data(),
+                token_data=token_data,
+                session=session,
+                state=state
+            )
         else:
             await callback_query.message.edit_caption(caption='Insufficient balance', reply_markup=to_home())
             return
@@ -77,67 +92,16 @@ async def confirm_swap(callback_query: CallbackQuery, state: FSMContext, session
     current_state = await state.get_state()
     if current_state == buy.BuyState.confirmation or current_state == sell.SellState.confirmation:
         db_wallet = await wallet.get_wallet_by_id(session, callback_query.from_user.id)
-        db_user = await session.get(User, callback_query.from_user.id)
 
         data = await state.get_data()
         token_data = data.get('token_data')
-
-        if token_data['address'] == data.get('input_mint'):
-            slippage = db_user.sell_slippage * 100
-        else:
-            slippage = db_user.buy_slippage * 100
-
-        response = await swap.swap(
-            db_wallet.encrypted_private_key, 
-            data.get('input_mint'), 
-            data.get('output_mint'),
-            data.get('amount'),
-            int(slippage),
-            data.get('decimals')
+        
+        await swap.make_swap_with_callback(
+                callback_query=callback_query,
+                db_wallet=db_wallet,
+                user_id=callback_query.from_user.id,
+                data=data,
+                token_data=token_data,
+                session=session,
+                state=state
             )
-        await callback_query.message.edit_caption(caption='Transaction sent. Waiting for confirmation...')
-        try:
-            tx_sig, quote_response = response
-            swap_record = Swap(
-                wallet=db_wallet.id,
-                input_mint=quote_response['inputMint'],
-                output_mint=quote_response['outputMint'],
-                input_amount=int(quote_response['inAmount']),
-                output_amount=int(quote_response['outAmount']),
-                status='Waiting for Confirmation',
-                date=datetime.now()
-                )
-            session.add(swap_record)
-            await session.commit()
-
-
-            confirmation = await client.confirm_transaction(tx_sig, commitment=Finalized, sleep_seconds=5)
-            if confirmation.value:
-                if confirmation.value[0].confirmation_status == TransactionConfirmationStatus.Finalized:
-                    if token_data['address'] == quote_response['inputMint']:
-                        input_symbol = token_data['symbol'].upper()
-                        output_symbol = 'SOL'
-                        input_decimals = data.get('decimals')
-                        output_decimals = 9
-                    else:
-                        input_symbol = 'SOL'
-                        output_symbol = token_data['symbol'].upper()
-                        input_decimals = 9
-                        output_decimals = data.get('decimals')
-                    text = texts.SUCCESSFULL_TRANSACTION.format(
-                            input_symbol=input_symbol, output_symbol=output_symbol,
-                            in_amount=float(quote_response['inAmount']) / 10 ** input_decimals,
-                            out_amount=float(quote_response['outAmount']) / 10 ** output_decimals,
-                        )
-                    await callback_query.message.edit_caption(caption=text, reply_markup=to_home())
-                    swap_record.status = 'Finalized'
-                    await session.commit()
-                    
-            await state.clear()
-        except Exception as e:
-            await callback_query.message.edit_caption(caption='Transaction failed!', reply_markup=to_home())
-            swap_record.status = 'Failed'
-            await session.commit()
-            print(e)
-            await state.clear()
-            return

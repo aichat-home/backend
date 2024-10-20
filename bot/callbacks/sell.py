@@ -6,8 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.keyboards import sell_keyboard, sell_token as sell_token_keyboard, to_home, swap_confirmation
 from bot.states import sell
-from utils import wallet, market, image
+from utils import wallet, market, image, swap
 from session import get_session
+from models import User
 
 
 
@@ -58,6 +59,29 @@ async def show_token(callback_query: CallbackQuery, session: AsyncSession, state
     pnl, average_buy_price = await wallet.get_average_buy_price_and_pnl(db_wallet.id, mint, session)
     pnl = f'{pnl:.2f}%' if pnl != 0 else 'N/A'
 
+    profit_can_made = 'N/A'
+    sell_price = None
+
+    if average_buy_price:
+        quote = await swap.get_quote(
+            input_mint=mint,
+            output_mint='So11111111111111111111111111111111111111112',
+            amount=int(amount * 10 ** 9),
+            slippage_bps=500,
+            session=client_session,
+            )
+        print(quote)
+
+        if quote:
+            in_amount = quote.get('inAmount')
+            out_amount = quote.get('outAmount')
+
+            if in_amount and out_amount:
+                sell_price = float(out_amount) / float(in_amount)
+
+        if sell_price:
+            profit_can_made = f'{(sell_price / average_buy_price) * 100 - 100:.2f}%'
+
     if token_data:
         text = (
             f'Sell <a href="https://solscan.io/token/{mint}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
@@ -70,7 +94,8 @@ async def show_token(callback_query: CallbackQuery, session: AsyncSession, state
 
             f'Statistics: \n\n'
 
-            f'PNL: {pnl}'
+            f'PNL: {pnl}\n'
+            f'Profit Can Made: {profit_can_made}'
         )
         reply_markup = sell_token_keyboard(mint)
 
@@ -108,8 +133,9 @@ async def sell_token_amount(callback_query: CallbackQuery, session: AsyncSession
     mint = data[1]
     amount = data[2]
 
-    token_data = await state.get_data()
-    token_data = token_data.get('token_data')
+    data = await state.get_data()
+    token_data = data.get('token_data')
+    print(data, token_data)
 
 
     if amount == 'x':
@@ -133,23 +159,51 @@ async def sell_token_amount(callback_query: CallbackQuery, session: AsyncSession
         percent = float(amount)
 
         db_wallet = await wallet.get_wallet_by_id(session, callback_query.from_user.id)
-        token = await wallet.get_token(db_wallet.public_key, mint)
+        
+        
+        db_user = await session.get(User, callback_query.from_user.id)
 
+        if db_user.extra_confirmation:
+            token = await wallet.get_token(db_wallet.public_key, mint)
+
+            mint, balance, decimals = wallet.parse_token_mint_address_amount_decimals(token.value[0])
+
+            amount = balance * (percent / 100)
+            
+            await state.update_data(
+                input_decimals=decimals, 
+                output_decimals=9,
+                input_mint=mint, 
+                output_mint='So11111111111111111111111111111111111111112',
+                amount=amount,
+                )
+            
+            await state.set_state(sell.SellState.confirmation)
+            await callback_query.message.edit_caption(caption=
+                f'You are about to sell {amount} {token_data["symbol"].upper()} for SOL. Please confirm.',
+                reply_markup=swap_confirmation()
+            )
+            return
+        token = await wallet.get_token(db_wallet.public_key, mint)
         mint, balance, decimals = wallet.parse_token_mint_address_amount_decimals(token.value[0])
 
         amount = balance * (percent / 100)
-        
         await state.update_data(
-            decimals=decimals, 
-            input_mint=mint, 
-            output_mint='So11111111111111111111111111111111111111112',
-            amount=amount,
+                input_decimals=decimals, 
+                output_decimals=9,
+                input_mint=mint, 
+                output_mint='So11111111111111111111111111111111111111112',
+                amount=amount,
+                )
+        data = await state.get_data()
+        await swap.make_swap_with_callback(
+                callback_query=callback_query,
+                db_wallet=db_wallet,
+                user_id=callback_query.from_user.id,
+                data=data,
+                token_data=token_data,
+                session=session,
+                state=state
             )
-        
-        await state.set_state(sell.SellState.confirmation)
-        await callback_query.message.edit_caption(caption=
-            f'You are about to sell {amount} {token_data["symbol"].upper()} for SOL. Please confirm.',
-            reply_markup=swap_confirmation()
-        )
 
 

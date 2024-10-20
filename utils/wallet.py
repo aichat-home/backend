@@ -145,7 +145,7 @@ async def send_transaction(lamports_amount: int, encrypted_private_key: bytes, r
     # Send the transaction
     response = await client.send_transaction(transaction, sender_keypair, opts=TxOpts(skip_preflight=False, preflight_commitment="processed"))
 
-    return response
+    return response.value
 
 
 def calculate_fee(lamports_amount: int) -> tuple[int, int]:

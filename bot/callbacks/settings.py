@@ -58,3 +58,15 @@ async def slippage_config(callback_query: CallbackQuery, state: FSMContext):
         caption=text,
         reply_markup=to_home()
     )
+
+
+@router.callback_query(F.data == 'change_confirmation')
+async def change_confirmation(callback_query: CallbackQuery, session: AsyncSession):
+    user = await session.get(User, callback_query.from_user.id)    
+    user.extra_confirmation = not user.extra_confirmation
+    await session.commit()
+
+    await callback_query.answer()
+    await callback_query.message.edit_reply_markup(
+        reply_markup=settings_keyboard(user)
+    )

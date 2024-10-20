@@ -7,9 +7,13 @@ from aiogram.fsm.context import FSMContext
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from solders.transaction_status import TransactionConfirmationStatus # type: ignore
+from solana.rpc.commitment import Finalized
+
 from bot.keyboards import wallet_keyboard, export_wallet_confirmation, close_private_key, cancel_withdraw, to_home
 from bot.texts import texts
 from bot.states import withdraw
+from rpc import client
 from utils import wallet
 from models import SolanaWallet as Wallet
 
@@ -101,9 +105,14 @@ async def confirm_withdraw(callback_query: CallbackQuery, state: FSMContext):
 
         if amount <= balance:
             try:
-                await wallet.send_transaction(amount * 1_000_000_000, db_wallet.encrypted_private_key, receiver_address)
-                await callback_query.message.edit_caption(caption='Transaction sent successfully', reply_markup=to_home())
-                await state.clear()
+                tx_sig = await wallet.send_transaction(amount * 1_000_000_000, db_wallet.encrypted_private_key, receiver_address)
+                await callback_query.message.edit_caption(caption='Transaction sent. Waiting for confirmation...')
+
+                confirmation = await client.confirm_transaction(tx_sig, commitment=Finalized, sleep_seconds=5)
+                if confirmation.value:
+                    if confirmation.value[0].confirmation_status == TransactionConfirmationStatus.Finalized:
+                        await callback_query.message.edit_caption(caption='Transaction went successfull', reply_markup=to_home())
+                        await state.clear()
             except Exception as e:
                 print(e)
                 await callback_query.message.edit_caption(caption='Transaction failed', reply_markup=to_home())
