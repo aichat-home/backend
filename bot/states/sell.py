@@ -6,8 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.keyboards import swap_confirmation, to_home
 from bot.image import start_photo
-from utils import wallet, swap
-from models import User
+from utils import wallet
+from models import Settings
+from utils.swap import swap
 
 
 
@@ -29,12 +30,6 @@ async def sell_token(message: Message, state: FSMContext, session: AsyncSession)
     token = await wallet.get_token(db_wallet.public_key, token_data['address'])
     mint, balance, decimals = wallet.parse_token_mint_address_amount_decimals(token.value[0])
 
-    await state.update_data(
-        input_decimals=decimals, 
-        output_decimals=9,
-        input_mint=mint, 
-        output_mint='So11111111111111111111111111111111111111112'
-        )
 
     if current_state == SellState.amount.state:
         text = message.text
@@ -62,9 +57,9 @@ async def sell_token(message: Message, state: FSMContext, session: AsyncSession)
         except ValueError:
             await message.answer_photo(photo=start_photo, caption='Invalid percent. Please enter a number.', reply_markup=to_home())
             return
-    db_user = await session.get(User, message.from_user.id)
+    settings = await session.get(Settings, message.from_user.id)
 
-    if db_user.extra_confirmation:
+    if settings.extra_confirmation:
         await message.answer_photo(
             photo=start_photo, 
             caption=f'You are about to sell {amount} {token_data["symbol"].upper()} for SOL. Please confirm.',
@@ -72,12 +67,13 @@ async def sell_token(message: Message, state: FSMContext, session: AsyncSession)
         )
         return
     
-    await swap.make_swap_with_message(
-                message=message,
-                db_wallet=db_wallet,
-                user_id=message.from_user.id,
-                token_data=token_data,
-                data=await state.get_data(),
-                session=session
-            )
+    await swap.sell_token(
+        token_data=token_data,
+        db_wallet=db_wallet,
+        slippage=settings.sell_slippage,
+        amount=amount,
+        message_or_callback=message,
+        session=session,
+        photo=start_photo
+    )
 

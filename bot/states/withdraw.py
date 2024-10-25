@@ -63,6 +63,14 @@ async def withdraw_state(state: FSMContext, message: Message, session: AsyncSess
                 if confirmation.value[0].confirmation_status == TransactionConfirmationStatus.Finalized:
                     await message.answer_photo(photo=start_photo, caption='Transaction went successfull', reply_markup=to_home())
                     await state.clear()
+
+                    await wallet.create_withdraw_in_db(
+                            from_pubkey=db_wallet.public_key,
+                            to_pubkey=message.text,
+                            lamports=amount,
+                            wallet_id=db_wallet.id,
+                            session=session
+                        )
         except Exception as e:
             print(e)
             await message.answer_photo(photo=start_photo, caption='Transaction failed', reply_markup=to_home())

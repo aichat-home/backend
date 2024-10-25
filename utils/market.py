@@ -5,7 +5,7 @@ from solders.pubkey import Pubkey # type: ignore
 
 from . import pump
 from cache import simple_cache
-
+from rpc import client
 
 
 async def get_mints(session: ClientSession) -> dict:
@@ -58,7 +58,8 @@ async def get_token_data_by_address(session: ClientSession, address: str) -> dic
 
     return None
 
-async def get_token_decimals(client: AsyncClient, address: str):
+
+async def get_token_decimals(address: str):
     '''Getting token decimals by address
     Uses Solana RPC to fetch token decimals.
     '''

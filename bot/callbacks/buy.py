@@ -4,12 +4,15 @@ from aiogram.fsm.context import FSMContext
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from utils import wallet, market, swap
-from models import User
+from solders.keypair import Keypair # type: ignore
+
+from utils import wallet, market, user as user_crud
+from models import User, Settings
 from session import get_session
 from bot.keyboards import swap_confirmation, cancel_keyboard, to_home
 from bot.states import tokens
 from bot.states import buy, sell
+from utils.swap import swap, raydium, utils
 
 
 
@@ -54,33 +57,22 @@ async def buy_token(callback_query: CallbackQuery, state: FSMContext, session: A
             await state.update_data(amount=amount)
             await state.set_state(buy.BuyState.confirmation)
 
-            db_user = await session.get(User, callback_query.from_user.id)
+            settings = await user_crud.get_settings(callback_query.from_user.id, session)
 
-            token = await wallet.get_token(db_wallet.public_key, token_data['address'])
-            _, _, decimals = wallet.parse_token_mint_address_amount_decimals(token.value[0])
-
-            await state.update_data(
-                input_mint='So11111111111111111111111111111111111111112', 
-                output_mint=token_data.get('address'),
-                input_decimals=9,
-                output_decimals=decimals
-            )
-
-            if db_user.extra_confirmation:
+            if settings.extra_confirmation:
                 await callback_query.message.edit_caption(caption=
                     f'You are about to buy {token_data["symbol"].upper()} for {amount} SOL . Please confirm.',
                     reply_markup=swap_confirmation()
                 )
                 await callback_query.answer()
                 return
-            await swap.make_swap_with_callback(
-                callback_query=callback_query,
-                db_wallet=db_wallet,
-                user_id=callback_query.from_user.id,
-                data=await state.get_data(),
+            await swap.buy_token(
                 token_data=token_data,
-                session=session,
-                state=state
+                db_wallet=db_wallet,
+                slippage=settings.buy_slippage,
+                amount=amount,
+                message_or_callback=callback_query,
+                session=session
             )
         else:
             await callback_query.message.edit_caption(caption='Insufficient balance', reply_markup=to_home())
@@ -105,3 +97,4 @@ async def confirm_swap(callback_query: CallbackQuery, state: FSMContext, session
                 session=session,
                 state=state
             )
+        

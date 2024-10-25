@@ -6,9 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.keyboards import sell_keyboard, sell_token as sell_token_keyboard, to_home, swap_confirmation
 from bot.states import sell
-from utils import wallet, market, image, swap
+from utils import wallet, market, image
 from session import get_session
-from models import User
+from models import Settings
+from utils.swap import swap, utils, constants
 
 
 
@@ -63,24 +64,13 @@ async def show_token(callback_query: CallbackQuery, session: AsyncSession, state
     sell_price = None
 
     if average_buy_price:
-        quote = await swap.get_quote(
-            input_mint=mint,
-            output_mint='So11111111111111111111111111111111111111112',
-            amount=int(amount * 10 ** 9),
-            slippage_bps=500,
-            session=client_session,
-            )
-        print(quote)
+        pair_address = await utils.get_pair_address(mint, client_session)
+        pool_keys = await utils.fetch_pool_keys(pair_address)
+        token_price, token_decimals = await utils.get_token_price(pool_keys)
+        sell_price = token_price * constants.SOL_DECIMAL / (10 ** token_decimals)
 
-        if quote:
-            in_amount = quote.get('inAmount')
-            out_amount = quote.get('outAmount')
+        profit_can_made = f'{(sell_price / average_buy_price) * 100 - 100:.2f}%'
 
-            if in_amount and out_amount:
-                sell_price = float(out_amount) / float(in_amount)
-
-        if sell_price:
-            profit_can_made = f'{(sell_price / average_buy_price) * 100 - 100:.2f}%'
 
     if token_data:
         text = (
@@ -161,22 +151,13 @@ async def sell_token_amount(callback_query: CallbackQuery, session: AsyncSession
         db_wallet = await wallet.get_wallet_by_id(session, callback_query.from_user.id)
         
         
-        db_user = await session.get(User, callback_query.from_user.id)
+        settings = await session.get(Settings, callback_query.from_user.id)
+        
+        token = await wallet.get_token(db_wallet.public_key, mint)
+        mint, balance, decimals = wallet.parse_token_mint_address_amount_decimals(token.value[0])
+        amount = balance * (percent / 100)
 
-        if db_user.extra_confirmation:
-            token = await wallet.get_token(db_wallet.public_key, mint)
-
-            mint, balance, decimals = wallet.parse_token_mint_address_amount_decimals(token.value[0])
-
-            amount = balance * (percent / 100)
-            
-            await state.update_data(
-                input_decimals=decimals, 
-                output_decimals=9,
-                input_mint=mint, 
-                output_mint='So11111111111111111111111111111111111111112',
-                amount=amount,
-                )
+        if settings.extra_confirmation:
             
             await state.set_state(sell.SellState.confirmation)
             await callback_query.message.edit_caption(caption=
@@ -184,26 +165,16 @@ async def sell_token_amount(callback_query: CallbackQuery, session: AsyncSession
                 reply_markup=swap_confirmation()
             )
             return
-        token = await wallet.get_token(db_wallet.public_key, mint)
-        mint, balance, decimals = wallet.parse_token_mint_address_amount_decimals(token.value[0])
+        
 
-        amount = balance * (percent / 100)
-        await state.update_data(
-                input_decimals=decimals, 
-                output_decimals=9,
-                input_mint=mint, 
-                output_mint='So11111111111111111111111111111111111111112',
-                amount=amount,
-                )
         data = await state.get_data()
-        await swap.make_swap_with_callback(
-                callback_query=callback_query,
-                db_wallet=db_wallet,
-                user_id=callback_query.from_user.id,
-                data=data,
-                token_data=token_data,
-                session=session,
-                state=state
-            )
+        await swap.sell_token(
+            token_data=token_data,
+            db_wallet=db_wallet,
+            slippage=settings.sell_slippage,
+            amount=amount,
+            message_or_callback=callback_query,
+            session=session,
+        )
 
 

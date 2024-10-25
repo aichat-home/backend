@@ -3,7 +3,7 @@ from datetime import datetime
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from models import User
+from models import Settings
 
 
 start_keyboard = InlineKeyboardMarkup(
@@ -12,15 +12,16 @@ start_keyboard = InlineKeyboardMarkup(
             InlineKeyboardButton(text='🤖 Join Mini App', url='https://t.me/BeamTapBot/Dapp?startapp=VHJhZGluZyBCb3Q='),
         ],
         [
-            InlineKeyboardButton(text='📈 Buy', callback_data='buy'),
-            InlineKeyboardButton(text='📉 Sell & Manage', callback_data='sell'),
-        ],
-        [
             InlineKeyboardButton(text='💳 Wallet', callback_data='wallet'),
             InlineKeyboardButton(text='❓ Help', callback_data='help'),
             InlineKeyboardButton(text='⚙️ Settings', callback_data='settings')
         ],
         [
+            InlineKeyboardButton(text='📈 Buy', callback_data='buy'),
+            InlineKeyboardButton(text='📉 Sell & Manage', callback_data='sell'),
+        ],
+        [
+            InlineKeyboardButton(text='Refer Friends', callback_data='referral'),
             InlineKeyboardButton(text='Pump.fun', callback_data='pump.fun'),
             InlineKeyboardButton(text='Sniper Bot', callback_data='sniper_bot'),
         ],
@@ -49,7 +50,7 @@ def buy_keyboard(token_address, refresh_prefix='token'):
     chart_button = InlineKeyboardButton(text='Chart', url=f'https://dexscreener.com/solana/{token_address}?id=viqdmf33')
     builder.row(explorer_button, chart_button, width=2)
 
-    buy_1_sol = InlineKeyboardButton(text='💲 Buy 0.5 SOL', callback_data=f'buy_0.5_{token_address}')
+    buy_1_sol = InlineKeyboardButton(text='💲 Buy 0.5 SOL', callback_data=f'buy_0.0001_{token_address}')
     buy_5_sol = InlineKeyboardButton(text='💸 Buy 1.0 SOL', callback_data=f'buy_1_{token_address}')
     buy_x_sol = InlineKeyboardButton(text='💵 Buy X SOL', callback_data=f'buy_x_{token_address}')
     builder.row(buy_1_sol, buy_5_sol, buy_x_sol, width=3)
@@ -64,7 +65,7 @@ def wallet_keyboard(wallet_address):
     builder = InlineKeyboardBuilder()
 
     solscan_button = InlineKeyboardButton(text='View on Solscan', url=f'https://solscan.io/account/{wallet_address}')
-    colse_button = InlineKeyboardButton(text='Close', callback_data='home')
+    colse_button = InlineKeyboardButton(text='⬅ Back to Home', callback_data='home')
     builder.row(solscan_button, colse_button, width=2)
 
     private_key_button = InlineKeyboardButton(text='🔒 Export private key', callback_data=f'export_confirmation_{wallet_address}')
@@ -130,7 +131,7 @@ def to_home():
     return builder.as_markup()
 
 
-def settings_keyboard(user: User):
+def settings_keyboard(settings: Settings):
     builder = InlineKeyboardBuilder()
 
     to_home  = InlineKeyboardButton(text='⬅ Back to Home', callback_data='home')
@@ -139,14 +140,14 @@ def settings_keyboard(user: User):
     slippage_config = InlineKeyboardButton(text='Slippage', callback_data='slippage_config_none')
     builder.row(slippage_config, width=1)
 
-    buy_slippage = InlineKeyboardButton(text=f'Buy: {user.buy_slippage}%', callback_data='slippage_config_buy')
-    sell_slippage = InlineKeyboardButton(text=f'Sell: {user.sell_slippage}%', callback_data='slippage_config_sell')
+    buy_slippage = InlineKeyboardButton(text=f'Buy: {settings.buy_slippage}%', callback_data='slippage_config_buy')
+    sell_slippage = InlineKeyboardButton(text=f'Sell: {settings.sell_slippage}%', callback_data='slippage_config_sell')
     builder.row(buy_slippage, sell_slippage, width=2)
 
     extra_confirmation = InlineKeyboardButton(text='Extra confirmation', callback_data='none')
     builder.row(extra_confirmation, width=1)
 
-    confirmation = InlineKeyboardButton(text=f'{"True" if user.extra_confirmation else "False"}', callback_data='change_confirmation')
+    confirmation = InlineKeyboardButton(text=f'{"True" if settings.extra_confirmation else "False"}', callback_data='change_confirmation')
     builder.row(confirmation, width=1)
 
 

@@ -8,4 +8,4 @@ router = Router()
 
 @router.callback_query(F.data == 'sniper_bot')
 async def get_new_tokens(callback_query: CallbackQuery):
-    await callback_query.answer('Comming soon!')
+    await callback_query.answer('Coming soon!')

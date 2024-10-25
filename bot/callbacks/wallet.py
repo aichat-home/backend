@@ -85,14 +85,15 @@ async def withdraw_check(callback_query: CallbackQuery, session: AsyncSession, s
             await state.update_data(amount=amount)
 
             await state.set_state(withdraw.WithdrawState.receiver_address)
-            await callback_query.message.edit_caption(caption='Enter receiver address', reply_markup=cancel_withdraw())
+            caption = 'Enter receiver address'
         else:
             await state.set_state(withdraw.WithdrawState.amount)
-            await callback_query.message.edit_caption(caption='Enter amount', reply_markup=cancel_withdraw())
+            caption = 'Enter amount'
+        await callback_query.message.edit_caption(caption=caption, reply_markup=cancel_withdraw())
     
 
 @router.callback_query(F.data == 'confirm')
-async def confirm_withdraw(callback_query: CallbackQuery, state: FSMContext):
+async def confirm_withdraw(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
     current_state = await state.get_state()
     if current_state == withdraw.WithdrawState.confirm:
         data = await state.get_data()
@@ -113,6 +114,14 @@ async def confirm_withdraw(callback_query: CallbackQuery, state: FSMContext):
                     if confirmation.value[0].confirmation_status == TransactionConfirmationStatus.Finalized:
                         await callback_query.message.edit_caption(caption='Transaction went successfull', reply_markup=to_home())
                         await state.clear()
+
+                        await wallet.create_withdraw_in_db(
+                            from_pubkey=db_wallet.public_key,
+                            to_pubkey=receiver_address,
+                            lamports=amount,
+                            wallet_id=db_wallet.id,
+                            session=session
+                        )
             except Exception as e:
                 print(e)
                 await callback_query.message.edit_caption(caption='Transaction failed', reply_markup=to_home())

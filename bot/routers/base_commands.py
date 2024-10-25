@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.keyboards import start_keyboard
 from bot.texts import texts
 from bot.image import start_photo
-from models import User
+from models import User, Settings
 from utils import wallet, user as user_crud
 from schemas import UserCreate
 
@@ -20,6 +20,7 @@ router = Router()
 @router.message(CommandStart())
 async def start(message: Message, session: AsyncSession):
     user = await session.get(User, message.from_user.id)
+    settings = None
     if not user:
         user, _ = await user_crud.create_user(
             UserCreate(
@@ -34,14 +35,16 @@ async def start(message: Message, session: AsyncSession):
         )
         session.add(user)
         await session.commit()
-    if user.sell_slippage is None or user.buy_slippage is None:
-        user.sell_slippage = 5
-        user.buy_slippage = 5
-        await session.commit()
 
-    if user.extra_confirmation is None:
-        user.extra_confirmation = False
+        settings = Settings(id=user.id)
+        session.add(settings)
         await session.commit()
+    if settings is None:
+        settings = await session.get(Settings, user.id)
+        if settings is None:
+            settings = Settings(id=user.id)
+            session.add(settings)
+            await session.commit()
 
     db_wallet = await wallet.get_wallet_by_id(session, message.from_user.id)
 

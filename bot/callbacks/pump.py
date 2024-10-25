@@ -16,7 +16,7 @@ router = Router()
 
 @router.callback_query(F.data == 'pump.fun')
 async def get_new_tokens(callback_query: CallbackQuery):
-    await callback_query.answer('Comming soon!')
+    await callback_query.answer('Coming soon!')
     # new_tokens = pump.get_last_20_tokens()
     # try:
     #     await callback_query.message.edit_caption(caption='New tokens: ', reply_markup=pump_keyboard(new_tokens))

@@ -41,17 +41,27 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(255), default='REGULAR', nullable=False)
     lastLogin: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(), nullable=True)
     partner: Mapped[str] = mapped_column(ForeignKey('partners.inviteCode'), nullable=True)
-    buy_slippage: Mapped[float] = mapped_column(Float, nullable=True, default=5)
-    sell_slippage: Mapped[float] = mapped_column(Float, nullable=True, default=5)
-    extra_confirmation: Mapped[bool] = mapped_column(Boolean, nullable=True, default=False)
-
+    
     Partner: Mapped['Partner'] = relationship('Partner', back_populates='users')
     account: Mapped['Account'] = relationship('Account', back_populates='user')
     wallet: Mapped['Wallet'] = relationship('Wallet', back_populates='user')
+    settings: Mapped['Settings'] = relationship('Settings', back_populates='user')
     refferAccount: Mapped['RefferAccount'] = relationship('RefferAccount', back_populates='user')
 
     def __str__(self) -> str:
         return str(self.id)
+
+
+class Settings(Base):
+    __tablename__ = 'settings'
+
+    id: Mapped[int] = mapped_column(BigInteger, ForeignKey('users.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True, unique=True, index=True)
+
+    buy_slippage: Mapped[float] = mapped_column(Float, nullable=False, default=5)
+    sell_slippage: Mapped[float] = mapped_column(Float, nullable=False, default=5)
+    extra_confirmation: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    user: Mapped['User'] = relationship('User', back_populates='settings')
 
 
 class Account(Base):
@@ -156,9 +166,9 @@ class Withdraw(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     wallet: Mapped[int] = mapped_column(BigInteger, ForeignKey('solana_wallets.id'), nullable=False, index=True)
-    mint: Mapped[str] = mapped_column(Text, nullable=False)
-    receiver_address: Mapped[str] = mapped_column(Text, nullable=False)
-    amount: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    from_pubkey: Mapped[str] = mapped_column(Text, nullable=False)
+    to_pubkey: Mapped[str] = mapped_column(Text, nullable=False)
+    lamports: Mapped[int] = mapped_column(BigInteger, nullable=False)
     date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     Wallet: Mapped['SolanaWallet'] = relationship('SolanaWallet', back_populates='withdraws')
@@ -173,6 +183,7 @@ class Swap(Base):
     output_mint: Mapped[str] = mapped_column(Text, nullable=False)
     input_amount: Mapped[int] = mapped_column(BigInteger, nullable=False)
     output_amount: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    txn_sig: Mapped[str] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(255), nullable=False)
     date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 

@@ -4,11 +4,10 @@ from aiogram.fsm.state import StatesGroup, State
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from utils import swap, market
-from models import User
-from rpc import client
+from utils import user as user_crud
 from bot.keyboards import swap_confirmation, to_home
 from bot.image import start_photo
+from utils.swap import swap
 
 
 
@@ -24,39 +23,34 @@ async def buy_token(message: Message, state: FSMContext, session: AsyncSession):
 
     token_data = data.get('token_data', {})
     db_wallet = data.get('db_wallet')
-
-    decimals = await market.get_token_decimals(client, token_data['address'])
-
-    await state.update_data(
-    input_mint='So11111111111111111111111111111111111111112', 
-    output_mint=token_data.get('address'),
-    input_decimals=9,
-    output_decimals=decimals
-    )
+    
 
     if current_state == BuyState.amount.state:
         text = message.text
         try:
             amount = float(text)
             await state.update_data(amount=amount)
-            
-            db_user = await session.get(User, message.from_user.id)
-            if db_user.extra_confirmation:
+
+            settings = await user_crud.get_settings(message.from_user.id, session)
+            if settings.extra_confirmation:
                 await state.set_state(BuyState.confirmation)
                 
                 text = f'You are about to buy {token_data["symbol"].upper()} for {amount} SOL . Please confirm.'
                 await message.answer_photo(photo=start_photo, caption=text, reply_markup=swap_confirmation())
                 return
-            await swap.make_swap_with_message(
-                message=message,
-                db_wallet=db_wallet,
-                user_id=message.from_user.id,
+            
+            await swap.buy_token(
                 token_data=token_data,
-                data=await state.get_data(),
+                db_wallet=db_wallet,
+                slippage=settings.buy_slippage,
+                amount=amount,
+                message_or_callback=message,
+                photo=start_photo,
                 session=session
             )
             
-        except ValueError:
+        except Exception as e:
+            print(e)
             await message.answer_photo(photo=start_photo, caption='Invalid amount. Please enter a number.', reply_markup=to_home())
             return
     

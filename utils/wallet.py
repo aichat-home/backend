@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -14,7 +16,7 @@ from spl.token.constants import TOKEN_PROGRAM_ID
 from cryptography.fernet import Fernet
 
 from core import settings
-from models import SolanaWallet as Wallet, Swap
+from models import SolanaWallet as Wallet, Swap, Withdraw
 from rpc import client
 
 
@@ -186,7 +188,7 @@ def get_total_amount(swaps: list[Swap]) -> tuple[int, int]:
 
 def calculate_pnl(average_buy_price: int, average_sell_price: int) -> float:
     '''Calculate profit and loss'''
-    return (average_buy_price / average_sell_price) * 100 - 100
+    return (average_sell_price / average_buy_price) * 100 - 100
 
 
 async def get_average_buy_price_and_pnl(wallet_id: int, token_address: str, session: AsyncSession) -> tuple[float, float]:
@@ -212,3 +214,24 @@ async def get_average_buy_price_and_pnl(wallet_id: int, token_address: str, sess
     except Exception as e:
         print(f"Error: {e}")
         return 0, 0
+    
+
+
+async def create_withdraw_in_db(
+        from_pubkey: str,
+        to_pubkey: str,
+        lamports: int,
+        session: AsyncSession,
+        wallet_id: int
+    ):
+    '''Create withdrawal in the database'''
+
+    withdraw = Withdraw(
+        wallet=wallet_id,
+        from_pubkey=from_pubkey,
+        to_pubkey=to_pubkey,
+        lamports=lamports,
+        date=datetime.now()
+    )
+    session.add(withdraw)
+    await session.commit()

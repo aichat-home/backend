@@ -28,7 +28,7 @@ HELP_TEXT = ('Help:\n\n'
     'BeamBot is completely free! We charge {fee}% on transactions, and keep the bot free so that anyone can use it. \n\n'
 
     'Why is my Net Profit lower than expected?\n'
-    'Your Net Profit is calculated after deducting all associated costs, including Price Impact, Transfer Tax, Dex Fees, and a {fee}% BONKbot fee. This ensures the figure you see is what you actually receive, accounting for all transaction-related expenses.\n\n'
+    'Your Net Profit is calculated after deducting all associated costs, including Price Impact, Transfer Tax, Dex Fees, and a {fee}% BeamBot fee. This ensures the figure you see is what you actually receive, accounting for all transaction-related expenses.\n\n'
 
     'Further questions? Join our Telegram group: https://t.me/BeambotXYZ\n'
     )
@@ -38,9 +38,25 @@ SUCCESSFULL_TRANSACTION = (
     'Transaction Successful! 🎉\n\n'
 
     '{input_symbol} ({in_amount}) ⟶ {output_symbol} ({out_amount})\n'
-    'Platforms: {platforms}\n\n'
+    'Fee: {fee_amount}\n'
+    'See on <a href="https://solscan.io/tx/{txn_sig}">Solscan</a>\n\n'
 
     'You get {trading_points} Trading points\n\n'
 
     'Thank you for choosing our service! 😊'
     )
+
+
+REFERRALS_TEXT = (
+    'Referrals:\n\n'
+
+    'Your reflink: https://t.me/BeamTapBot/Dapp?startapp={referral_code}\n\n'
+
+    'Referrals: {referral_count}\n\n'
+
+    'Sol earned: {sol_earned} SOL\n\n'
+
+    'Rewards are automatically deposited to your wallet.\n\n'
+
+    'Refer your friends and earn 30% of their fees in the first month, 20% in the second and 10% forever!'
+)

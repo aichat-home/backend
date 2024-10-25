@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.keyboards import to_home
 from bot.image import start_photo
-from models import User
+from models import Settings
 
 
 
@@ -18,7 +18,7 @@ class SlippageState(StatesGroup):
 
 async def change_slippage(message: Message, state: FSMContext, session: AsyncSession):
     data = await state.get_data()
-    user: User = data.get('user')
+    settings: Settings = data.get('settings')
     current_state = await state.get_state()
 
     try:
@@ -32,13 +32,13 @@ async def change_slippage(message: Message, state: FSMContext, session: AsyncSes
 
     if current_state == SlippageState.buy_slippage:
         option = 'buy'
-        user.buy_slippage = amount
-        session.add(user)
+        settings.buy_slippage = amount
+        session.add(settings)
         await session.commit()
     elif current_state == SlippageState.sell_slippage:
         option ='sell'
-        user.sell_slippage = amount
-        session.add(user)
+        settings.sell_slippage = amount
+        session.add(settings)
         await session.commit()
 
     await message.answer_photo(photo=start_photo, caption=f'Slippage value for {option} set to {amount}%', reply_markup=to_home())
