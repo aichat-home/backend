@@ -3,7 +3,6 @@ from solana.rpc.async_api import AsyncClient
 
 from solders.pubkey import Pubkey # type: ignore
 
-from . import pump
 from cache import simple_cache
 from rpc import client
 
@@ -20,7 +19,7 @@ async def get_mints(session: ClientSession) -> dict:
     async with session.get('https://tokens.jup.ag/tokens?tags=verified') as response:
         mints = await response.json()
     
-    simple_cache.set('mints', mints, 3600)  # Cache mints for 1 hour
+    simple_cache.set('mints', mints, 600)  # Cache mints for 10 minutes
     return mints
 
 
@@ -88,16 +87,16 @@ def get_need_data_from_pair(pair: dict):
     mcap = pair.get('marketCap', 0)
 
     return {
-        'name': name,
-        'symbol': symbol,
-        'price': float(price_usd),
-        'm5': m5,
-        'h1': h1,
-        'h6': h6,
-        'h24': h24,
-        'liquidity': liquidity,
-        'market_cap': mcap,
-            }
+            'name': name,
+            'symbol': symbol,
+            'price': float(price_usd),
+            'm5': m5,
+            'h1': h1,
+            'h6': h6,
+            'h24': h24,
+            'liquidity': liquidity,
+            'market_cap': mcap,
+        }
 
 
 def format_number(num):

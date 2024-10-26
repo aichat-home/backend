@@ -167,6 +167,7 @@ class Order(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     wallet: Mapped[int] = mapped_column(BigInteger, ForeignKey('solana_wallets.id'), nullable=False, index=True)
     token_address: Mapped[str] = mapped_column(Text, nullable=False)
+    sol_amount: Mapped[float] = mapped_column(Float, nullable=False)
     slippage: Mapped[float] = mapped_column(Float, nullable=False)
     mev_protection: Mapped[bool] = mapped_column(Boolean, nullable=False)
     gas: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

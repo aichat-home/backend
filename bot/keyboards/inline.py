@@ -150,7 +150,6 @@ def settings_keyboard(settings: Settings):
     confirmation = InlineKeyboardButton(text=f'{"True" if settings.extra_confirmation else "False"}', callback_data='change_confirmation')
     builder.row(confirmation, width=1)
 
-
     return builder.as_markup()
 
 
@@ -219,5 +218,16 @@ def pump_keyboard(tokens: list[dict]):
     refresh_button = InlineKeyboardButton(text='🔄 Refresh', callback_data='pump.fun')
     to_home = InlineKeyboardButton(text='To Home', callback_data='home')
     builder.row(refresh_button, to_home, width=2)
+
+    return builder.as_markup()
+
+
+def sniper_show_keyboar():
+    builder = InlineKeyboardBuilder()
+
+    lists = InlineKeyboardButton(text='⚡ Lists', callback_data='sniper_list')
+    close = InlineKeyboardButton(text='❌ Close', callback_data='home')
+
+    builder.row(lists, close, width=1)
 
     return builder.as_markup()
