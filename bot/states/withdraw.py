@@ -48,7 +48,6 @@ async def withdraw_state(state: FSMContext, message: Message, session: AsyncSess
                     
                     f"To: <b>{message.text}</b>\n"
                     f"Amount: <b>{amount}</b> SOL\n"
-                    f"Fee: <b>{(amount * settings.program_fee_percentage) / 100}</b> SOL"
                     )
             
             await message.answer_photo(photo=start_photo, caption=text, reply_markup=withdraw_confirmation())

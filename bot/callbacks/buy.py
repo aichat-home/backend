@@ -52,7 +52,7 @@ async def buy_token(callback_query: CallbackQuery, state: FSMContext, session: A
         await callback_query.answer()
         return
     else:
-        if float(amount) <= balance:
+        if float(amount) >= balance:
             amount = float(amount)
             await state.update_data(amount=amount)
             await state.set_state(buy.BuyState.confirmation)

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.keyboards import start_keyboard
 from bot.texts import texts
 from bot.image import start_photo
-from models import User, Settings
+from models import User, Settings, RefferAccount
 from utils import wallet, user as user_crud
 from schemas import UserCreate
 
@@ -53,3 +53,4 @@ async def start(message: Message, session: AsyncSession):
 
     balance = await wallet.get_wallet_balance(db_wallet.public_key)
     await message.answer_photo(start_photo, caption=texts.START_TEXT.format(balance=balance, wallet_address=db_wallet.public_key), reply_markup=start_keyboard)
+

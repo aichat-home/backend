@@ -63,7 +63,7 @@ async def buy_token(
 
     pair_address = await utils.get_pair_address(token_data.get('address'), client_session)
     payer_keypair = Keypair.from_seed(wallet.decrypt_private_key(db_wallet.encrypted_private_key))
-    response = await raydium.buy(pair_address, amount, slippage, payer_keypair)
+    response = await raydium.buy(pair_address, amount, slippage, payer_keypair, session)
     if response:
         if response['status'] == 'Confirmed':
             if isinstance(message_or_callback, Message):
@@ -95,6 +95,13 @@ async def buy_token(
                     await message_or_callback.answer_photo(photo=photo, caption=text, reply_markup=to_home())
                 else:
                     await message_or_callback.message.edit_caption(caption=text, reply_markup=to_home())
+
+                result: dict[SolanaWallet, int] = response['result']
+                if result:
+                    for db_wallet, amount in result.items():
+                        db_wallet.commision_earned += amount / constants.SOL_DECIMAL
+                    await session.commit()
+
 
                 await end_swap(
                     swap=swap_db, 
@@ -162,6 +169,12 @@ async def sell_token(
                     await message_or_callback.answer_photo(photo=photo, caption=text, reply_markup=to_home())
                 else:
                     await message_or_callback.message.edit_caption(caption=text, reply_markup=to_home())
+
+                result: dict[SolanaWallet, int] = response['result']
+                if result:
+                    for db_wallet, amount in result.items():
+                        db_wallet.commision_earned += amount / constants.SOL_DECIMAL
+                    await session.commit()
 
                 await end_swap(
                     swap=swap_db, 

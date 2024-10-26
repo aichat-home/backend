@@ -50,7 +50,7 @@ def buy_keyboard(token_address, refresh_prefix='token'):
     chart_button = InlineKeyboardButton(text='Chart', url=f'https://dexscreener.com/solana/{token_address}?id=viqdmf33')
     builder.row(explorer_button, chart_button, width=2)
 
-    buy_1_sol = InlineKeyboardButton(text='💲 Buy 0.5 SOL', callback_data=f'buy_0.0001_{token_address}')
+    buy_1_sol = InlineKeyboardButton(text='💲 Buy 0.5 SOL', callback_data=f'buy_0.5_{token_address}')
     buy_5_sol = InlineKeyboardButton(text='💸 Buy 1.0 SOL', callback_data=f'buy_1_{token_address}')
     buy_x_sol = InlineKeyboardButton(text='💵 Buy X SOL', callback_data=f'buy_x_{token_address}')
     builder.row(buy_1_sol, buy_5_sol, buy_x_sol, width=3)

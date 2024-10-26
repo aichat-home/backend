@@ -17,19 +17,23 @@ from spl.token.instructions import (
     sync_native,
 )
 
-from rpc import client
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from rpc import client
+from session import get_session
+
+from ..market import get_token_data_by_address
 from .constants import SOL_DECIMAL, SOL, TOKEN_PROGRAM_ID, UNIT_BUDGET, UNIT_PRICE, WSOL
+from .commisions import get_all_instructions_for_referrals, get_layer_for_amount
 from .layouts import ACCOUNT_LAYOUT
 from .utils import (
-    confirm_txn, fetch_pool_keys, 
-    get_token_price, make_swap_instruction, 
-    get_token_balance, get_swap_and_fee_amount, 
+    fetch_pool_keys, get_token_price, 
+    make_swap_instruction, get_swap_and_fee_amount, 
     create_fee_instruction
     )
 
 
-async def buy(pair_address: str, sol_in: float, slippage: int, payer_keypair: Keypair) -> bool:
+async def buy(pair_address: str, sol_in: float, slippage: int, payer_keypair: Keypair, session: AsyncSession):
     try:
         print(f'Pair Address: {pair_address}')
         
@@ -51,13 +55,15 @@ async def buy(pair_address: str, sol_in: float, slippage: int, payer_keypair: Ke
         minimum_amount_out = int(amount_out_with_slippage * 10 ** token_decimal)
         print(f'Amount In: {amount_in} | Min Amount Out: {minimum_amount_out} | Fee amount {fee_amount}')
 
-        token_account_check = await client.get_token_accounts_by_owner(payer_keypair.pubkey(), TokenAccountOpts(mint), Processed)
+        public_key = payer_keypair.pubkey()
+
+        token_account_check = await client.get_token_accounts_by_owner(public_key, TokenAccountOpts(mint), Processed)
         if token_account_check.value:
             token_account = token_account_check.value[0].pubkey
             token_account_instr = None
         else:
-            token_account = get_associated_token_address(payer_keypair.pubkey(), mint)
-            token_account_instr = create_associated_token_account(payer_keypair.pubkey(), payer_keypair.pubkey(), mint)
+            token_account = get_associated_token_address(public_key, mint)
+            token_account_instr = create_associated_token_account(public_key, public_key, mint)
 
         wsol_token_account = None
         wsol_account_keypair = None
@@ -65,14 +71,14 @@ async def buy(pair_address: str, sol_in: float, slippage: int, payer_keypair: Ke
         init_wsol_account_instr = None
         fund_wsol_account_instr = None
         sync_native_instr = None
-        wsol_account_check = await client.get_token_accounts_by_owner(payer_keypair.pubkey(), TokenAccountOpts(WSOL), Processed)
+        wsol_account_check = await client.get_token_accounts_by_owner(public_key, TokenAccountOpts(WSOL), Processed)
         
         if wsol_account_check.value:
             wsol_token_account = wsol_account_check.value[0].pubkey
             
             fund_wsol_account_instr = transfer(
                 TransferParams(
-                    from_pubkey=payer_keypair.pubkey(),
+                    from_pubkey=public_key,
                     to_pubkey=wsol_token_account,
                     lamports=int(amount_in)
                 )
@@ -87,7 +93,7 @@ async def buy(pair_address: str, sol_in: float, slippage: int, payer_keypair: Ke
 
             create_wsol_account_instr = create_account(
                 CreateAccountParams(
-                    from_pubkey=payer_keypair.pubkey(),
+                    from_pubkey=public_key,
                     to_pubkey=wsol_token_account,
                     lamports=int(balance_needed + amount_in),
                     space=ACCOUNT_LAYOUT.sizeof(),
@@ -100,12 +106,23 @@ async def buy(pair_address: str, sol_in: float, slippage: int, payer_keypair: Ke
                     program_id=TOKEN_PROGRAM_ID,
                     account=wsol_token_account,
                     mint=WSOL,
-                    owner=payer_keypair.pubkey()
+                    owner=public_key
                 )
             )
 
         swap_instructions = make_swap_instruction(amount_in, minimum_amount_out, wsol_token_account, token_account, pool_keys, payer_keypair)
-        fee_instruction = create_fee_instruction(str(payer_keypair.pubkey()), 'F1pVGrtES7xtvmtKZMMxNf7K4asrqyAzLVtc8vHBuELu', fee_amount)
+
+        client_session = get_session()
+        sol_data = await get_token_data_by_address(client_session, SOL)
+        print(f'Sol data {sol_data}')
+        price = sol_data['price']
+        
+        layers = get_layer_for_amount(price * sol_in)
+        print(f'Layer: {layers}')
+        comission_instructions, referral_amount_fee, result = None, 0, {}
+        if layers:
+            comission_instructions, referral_amount_fee = await get_all_instructions_for_referrals(888, str(public_key), fee_amount, layers, session)
+            print(comission_instructions, referral_amount_fee)
 
         print('Building transaction...')
                 
@@ -115,27 +132,38 @@ async def buy(pair_address: str, sol_in: float, slippage: int, payer_keypair: Ke
 
         if create_wsol_account_instr:
             instructions.append(create_wsol_account_instr)
+            print('wsol create')
 
         if init_wsol_account_instr:
             instructions.append(init_wsol_account_instr)
+            print('init wsol')
 
         if fund_wsol_account_instr:
             instructions.append(fund_wsol_account_instr)
+            print('funs wsol')
             
         if sync_native_instr:
             instructions.append(sync_native_instr)
+            print('sync native')
         
         if token_account_instr:
             instructions.append(token_account_instr)
+            print('token instr')
         
-        if fee_instruction:
-            instructions.append(fee_instruction)
+        if comission_instructions:
+            for comission_instruction in comission_instructions:
+                instructions.append(comission_instruction)
+                print('com')
 
+        platform_fee_instruction = create_fee_instruction(from_pubkey=str(public_key), to_pubkey='F1pVGrtES7xtvmtKZMMxNf7K4asrqyAzLVtc8vHBuELu', amount=fee_amount - referral_amount_fee)
+        instructions.append(platform_fee_instruction)
+        print('platform')
         instructions.append(swap_instructions)
+        print('swap')
 
         latest_block_hash = await client.get_latest_blockhash()
         compiled_message = MessageV0.try_compile(
-            payer_keypair.pubkey(),
+            public_key,
             instructions,
             [],
             latest_block_hash.value.blockhash,
@@ -157,6 +185,7 @@ async def buy(pair_address: str, sol_in: float, slippage: int, payer_keypair: Ke
             'minimum_amount_out': amount_out,
             'token_decimal': token_decimal,
             'txn_sig': txn_sig,
+            'result': result
         }
     
     except Exception as e:
@@ -164,7 +193,7 @@ async def buy(pair_address: str, sol_in: float, slippage: int, payer_keypair: Ke
         return False
 
 
-async def sell(pair_address: str, amount, slippage, payer_keypair: Keypair):
+async def sell(pair_address: str, amount, slippage, payer_keypair: Keypair, session: AsyncSession):
     try:
         print(f'Pair Address: {pair_address}')
 
@@ -174,6 +203,8 @@ async def sell(pair_address: str, amount, slippage, payer_keypair: Keypair):
         if pool_keys is None:
             print('No pools keys found...')
             return False
+        
+        public_key = payer_keypair.pubkey()
 
         mint = pool_keys['base_mint'] if str(pool_keys['base_mint']) != SOL else pool_keys['quote_mint']
         
@@ -188,13 +219,13 @@ async def sell(pair_address: str, amount, slippage, payer_keypair: Keypair):
 
         print(f'Amount In: {amount_in} | Min Amount Out: {minimum_amount_out}')
 
-        token_account = get_associated_token_address(payer_keypair.pubkey(), mint)
+        token_account = get_associated_token_address(public_key, mint)
 
         wsol_token_account = None
         wsol_account_keypair = None
         create_wsol_account_instr = None
         init_wsol_account_instr = None
-        wsol_account_check = await client.get_token_accounts_by_owner(payer_keypair.pubkey(), TokenAccountOpts(WSOL), Processed)
+        wsol_account_check = await client.get_token_accounts_by_owner(public_key, TokenAccountOpts(WSOL), Processed)
         
         if wsol_account_check.value:
             wsol_token_account = wsol_account_check.value[0].pubkey
@@ -207,7 +238,7 @@ async def sell(pair_address: str, amount, slippage, payer_keypair: Keypair):
 
             create_wsol_account_instr = create_account(
                 CreateAccountParams(
-                    from_pubkey=payer_keypair.pubkey(),
+                    from_pubkey=public_key,
                     to_pubkey=wsol_token_account,
                     lamports=int(balance_needed),
                     space=ACCOUNT_LAYOUT.sizeof(),
@@ -220,16 +251,21 @@ async def sell(pair_address: str, amount, slippage, payer_keypair: Keypair):
                     program_id=TOKEN_PROGRAM_ID,
                     account=wsol_token_account,
                     mint=WSOL,
-                    owner=payer_keypair.pubkey()
+                    owner=public_key
                 )
             )
 
         swap_instructions = make_swap_instruction(amount_in, minimum_amount_out, token_account, wsol_token_account, pool_keys, payer_keypair)
-        fee_instruction = create_fee_instruction(
-            from_pubkey=str(payer_keypair.pubkey()),
-            to_pubkey='F1pVGrtES7xtvmtKZMMxNf7K4asrqyAzLVtc8vHBuELu',
-            amount=fee_amount
-        )
+
+        client_session = get_session()
+        sol_data = await get_token_data_by_address(client_session, SOL)
+        price = sol_data['price']
+        
+        layers = get_layer_for_amount(price * amount_out)
+        comission_instructions, referral_amount_fee, result = None, 0, {}
+        if layers:
+            comission_instructions, referral_amount_fee = await get_all_instructions_for_referrals(888, str(public_key), fee_amount, layers, session)
+            print(comission_instructions, referral_amount_fee)
 
         print('Building transaction...')
         instructions = []
@@ -244,11 +280,16 @@ async def sell(pair_address: str, amount, slippage, payer_keypair: Keypair):
 
         instructions.append(swap_instructions)
         
-        instructions.append(fee_instruction)      
+        if comission_instructions:
+            for comission_instruction in comission_instructions:
+                instructions.append(comission_instruction)
+
+        platform_fee_instruction = create_fee_instruction(from_pubkey=str(public_key), to_pubkey='F1pVGrtES7xtvmtKZMMxNf7K4asrqyAzLVtc8vHBuELu', amount=fee_amount - referral_amount_fee)
+        instructions.append(platform_fee_instruction)    
 
         latest_blockhash = await client.get_latest_blockhash()
         compiled_message = MessageV0.try_compile(
-            payer_keypair.pubkey(),
+            public_key,
             instructions,
             [],  
             latest_blockhash.value.blockhash,
@@ -269,7 +310,8 @@ async def sell(pair_address: str, amount, slippage, payer_keypair: Keypair):
             'sol_out': amount_out,
             'txn_sig': txn_sig,
             'token_decimal': token_decimal,
-            'fee_amount': fee_amount / SOL_DECIMAL
+            'fee_amount': fee_amount / SOL_DECIMAL,
+            'result': result
         }
     
     except Exception as e:

@@ -118,28 +118,15 @@ async def send_transaction(lamports_amount: int, encrypted_private_key: bytes, r
 
     transaction = Transaction()
 
-    lamports_to_send_to_user_wallet, lamports_to_send_to_admin_wallet = calculate_fee(lamports_amount)
-
     # Add the transfer instruction to the transaction
     transfer_to_user = transfer(
         TransferParams(
             from_pubkey=sender_keypair.pubkey(),
             to_pubkey=receiver_public_key,
-            lamports=lamports_to_send_to_user_wallet
+            lamports=lamports_amount
         )
     )
     transaction.add(transfer_to_user)
-
-
-    # Add the transfer instruction to the transaction
-    transfer_to_admin = transfer(
-        TransferParams(
-            from_pubkey=sender_keypair.pubkey(),
-            to_pubkey=Pubkey.from_string(settings.admin_wallet_address),
-            lamports=lamports_to_send_to_admin_wallet
-        )
-    )
-    transaction.add(transfer_to_admin)
 
     # Sign the transaction
     transaction.sign(sender_keypair)

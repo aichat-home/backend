@@ -68,7 +68,7 @@ def make_swap_instruction(amount_in:int, minimum_amount_out:int, token_account_i
 def get_swap_and_fee_amount(amount_in: int) -> tuple[int, int] | None:
     try:
         # Calculate fee amount based on the amount_in
-        fee_amount = int(amount_in * (50 / 100))
+        fee_amount = int(amount_in * (1 / 100))
         # Calculate swap amount considering fee
         swap_amount = amount_in - fee_amount
         return swap_amount, fee_amount

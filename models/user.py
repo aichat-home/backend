@@ -161,6 +161,17 @@ class SolanaWallet(Base):
     swaps: Mapped[list['Swap']] = relationship('Swap', back_populates='Wallet')
 
 
+class Order(Base):
+    __tablename__ = 'orders'
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    wallet: Mapped[int] = mapped_column(BigInteger, ForeignKey('solana_wallets.id'), nullable=False, index=True)
+    token_address: Mapped[str] = mapped_column(Text, nullable=False)
+    slippage: Mapped[float] = mapped_column(Float, nullable=False)
+    mev_protection: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    gas: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+
 class Withdraw(Base):
     __tablename__ = 'withdraws'
 
