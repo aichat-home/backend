@@ -21,9 +21,9 @@ from core import settings
 router = APIRouter(tags=['Tasks'])
 
 @router.get('/')
-@cache_manager.cache_response(key='tasks', ttl=600)
+@cache_manager.cache_response(key='tasks', ttl=60)
 async def get_tasks(session: AsyncSession = Depends(database.get_async_session)):
-    stmt = select(Task)
+    stmt = select(Task).order_by(Task.rank)
     result = await session.execute(stmt)
     tasks =  result.scalars().all()
 

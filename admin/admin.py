@@ -59,9 +59,9 @@ def create_view(model):
 
 
 class TaskView(ModelView, model=Task):
-    column_list = ['id', 'icon', 'type', 'title', 'amount', 'link', 'chatId', 'user_completed_count']
-    column_details_list = ['id', 'icon', 'type', 'title', 'amount', 'link', 'chatId']
-    form_columns = ['icon', 'type', 'title', 'amount', 'link', 'chatId']
+    column_list = ['id', 'icon', 'type', 'title', 'amount', 'link', 'chatId', 'rank', 'user_completed_count']
+    column_details_list = ['id', 'icon', 'type', 'title', 'amount', 'link', 'chatId', 'rank']
+    form_columns = ['icon', 'type', 'title', 'amount', 'link', 'chatId', 'rank']
 
 
 class PartnerView(ModelView, model=Partner):
@@ -69,8 +69,6 @@ class PartnerView(ModelView, model=Partner):
     column_details_list = ['id', 'name', 'inviteCode']
     form_columns = ['id', 'name', 'inviteCode']
     
-    form_include_pk = True
-
 
 def create_admin(app):
     authentication_backend = AdminAuth(secret_key=settings.telegram_token)
