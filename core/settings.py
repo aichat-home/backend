@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     solana_fee: int
     program_fee_percentage: float
     admin_wallet_address: str
+    # sniper_access_token: str
 
 
     model_config: SettingsConfigDict = SettingsConfigDict(

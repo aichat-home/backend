@@ -1,6 +1,9 @@
+from aiohttp import ClientSession
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from core import settings
 from models import Order
 
 
@@ -14,6 +17,7 @@ async def create_order(
     )
     session.add(order)
     await session.commit()
+    return order
 
 
 async def get_all_orders(wallet_id: int, session: AsyncSession):
@@ -23,14 +27,55 @@ async def get_all_orders(wallet_id: int, session: AsyncSession):
     return orders
 
 
-async def update_order(order_id: int, session: AsyncSession, **fields):
+async def get_order_by_id(order_id: int, session: AsyncSession):
     order = await session.get(Order, order_id)
-    for key, value in fields.items():
-        setattr(order, key, value)
-    await session.commit()
+    return order
 
 
 async def remove_order(order_id: int, session: AsyncSession):
     order = await session.get(Order, order_id)
-    del order
+    await session.delete(order)
     await session.commit()
+
+
+
+async def create_order_service(user_id, order: Order, private_key, session: ClientSession):
+    data = {
+        "user_id": user_id,
+        "order_id": order.id,
+        "token_address": order.token_address,
+        "slippage": order.slippage,
+        "mev_protection": order.mev_protection, 
+        "gas": order.gas,
+        "private_key": private_key
+    }
+    headers = {
+        'x-access-token': settings.sniper_access_token
+    }
+    async with session.post('http://sniper:9000/snipe', data=data, headers=headers) as response:
+        response = await response.json()
+
+
+async def update_order_service(user_id, order: Order, private_key, session: ClientSession):
+    data = {
+        "user_id": user_id,
+        "order_id": order.id,
+        "token_address": order.token_address,
+        "slippage": order.slippage,
+        "mev_protection": order.mev_protection, 
+        "gas": order.gas,
+        "private_key": private_key
+    }
+    headers = {
+        'x-access-token': settings.sniper_access_token
+    }
+    async with session.patch(f'http://sniper:9000/snipe/{order.id}', data=data, headers=headers) as response:
+        response = await response.json()
+
+
+async def remove_order_service(order_id: int, session: ClientSession):
+    headers = {
+        'x-access-token': settings.sniper_access_token
+    }
+    async with session.delete(f'http://sniper:9000/snipe/{order_id}', headers=headers) as response:
+        response = await response.json()

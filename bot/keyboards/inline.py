@@ -3,7 +3,7 @@ from datetime import datetime
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from models import Settings
+from models import Settings, Order
 
 
 start_keyboard = InlineKeyboardMarkup(
@@ -225,9 +225,70 @@ def pump_keyboard(tokens: list[dict]):
 def sniper_show_keyboar():
     builder = InlineKeyboardBuilder()
 
-    lists = InlineKeyboardButton(text='⚡ Lists', callback_data='sniper_list')
+    lists = InlineKeyboardButton(text='⚡ List of Active Snipers', callback_data='sniper_list')
     close = InlineKeyboardButton(text='❌ Close', callback_data='home')
 
     builder.row(lists, close, width=1)
+
+    return builder.as_markup()
+
+
+def sniper_token(slippage, gas, amount, address, mev_protection):
+    builder = InlineKeyboardBuilder()
+
+    refresh = InlineKeyboardButton(text='🔄 Refresh', callback_data=f'snipe_{address}')
+    builder.row(refresh, width=1)
+
+    gas_button = InlineKeyboardButton(text=f'Gas: {gas} SOL', callback_data='sniper_gas')
+    slippage_button = InlineKeyboardButton(text=f'Slippage: {slippage}%', callback_data='sniper_slippage')
+    builder.row(gas_button, slippage_button, width=2)
+
+    amount_button = InlineKeyboardButton(text=f'Amount: {amount} SOL', callback_data='sniper_amount')
+    mev_protection_button = InlineKeyboardButton(text=f'MEV Protection: {"On" if mev_protection else "Off"}', callback_data='sniper_mev')
+    builder.row(amount_button, mev_protection_button, width=2)
+
+    create_snipe = InlineKeyboardButton(text='Create', callback_data='create_sniper')
+    close = InlineKeyboardButton(text='❌ Close', callback_data='home')
+    builder.row(create_snipe, close, width=2)
+
+    return builder.as_markup()
+
+
+def edit_sniper_token(slippage, gas, amount, mev_protection, order_id):
+    builder = InlineKeyboardBuilder()
+
+    gas_button = InlineKeyboardButton(text=f'Gas: {gas} SOL', callback_data='edit_sniper_gas')
+    slippage_button = InlineKeyboardButton(text=f'Slippage: {slippage}%', callback_data='edit_sniper_slippage')
+    builder.row(gas_button, slippage_button, width=2)
+
+    amount_button = InlineKeyboardButton(text=f'Amount: {amount} SOL', callback_data='edit_sniper_amount')
+    mev_protection_button = InlineKeyboardButton(text=f'MEV Protection: {"On" if mev_protection else "Off"}', callback_data='edit_sniper_mev')
+    builder.row(amount_button, mev_protection_button, width=2)
+
+    create_snipe = InlineKeyboardButton(text='Delete', callback_data=f'delete_sniper_{order_id}')
+    close = InlineKeyboardButton(text='❌ Close', callback_data='sniper_list')
+    builder.row(create_snipe, close, width=2)
+
+    return builder.as_markup()
+
+
+def cancel_sniper_config(address):
+    builder = InlineKeyboardBuilder()
+
+    cancel = InlineKeyboardButton(text='❌ Cancel', callback_data=f'snipe_{address}')
+    builder.row(cancel, width=1)
+
+    return builder.as_markup()
+
+
+def show_all_snipers(orders: list[Order]):
+    builder = InlineKeyboardBuilder()
+
+    for order in orders:
+        button = InlineKeyboardButton(text=f'{order.token_address}', callback_data=f'edit_sniper_show_{order.id}')
+        builder.row(button, width=1)
+
+    close = InlineKeyboardButton(text='❌ Close', callback_data='sniper_bot')
+    builder.row(close, width=1)
 
     return builder.as_markup()

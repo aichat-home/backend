@@ -29,7 +29,7 @@ async def get_token(callback_query: CallbackQuery, session: AsyncSession):
         await callback_query.message.edit_caption(caption=(
             'Your Wallet:\n\n'
 
-            f'Address: <code>{db_wallet.public_key}</code>\n'
+            f'Address: <code>{db_wallet.public_key}</code> (Tap to copy)\n'
             f'Balance: <code>{balance} SOL</code>\n\n'
 
             'Tap to copy the address and send SOL to deposit.'),

@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.states import tokens, withdraw, settings, buy, sell
+from bot.states import tokens, withdraw, settings, buy, sell, sniper
 
 
 router = Router()
@@ -23,6 +23,9 @@ async def waiting_for_message(message: Message, state: FSMContext, session: Asyn
         elif current_state in (buy.BuyState.amount, buy.BuyState.confirmation):
             await buy.buy_token(message, state, session)
             return
+        elif current_state in (sniper.SnipeState.token, sniper.SnipeState.amount, sniper.SnipeState.slippage, sniper.SnipeState.gas, sniper.EditSniperState.token, sniper.EditSniperState.amount, sniper.EditSniperState.slippage, sniper.EditSniperState.gas):
+            await sniper.snipe_token(message, state, session)
+            return 
         elif current_state in (sell.SellState.amount, sell.SellState.percent, sell.SellState.confirmation):
             await sell.sell_token(message, state, session)
             return

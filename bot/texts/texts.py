@@ -30,7 +30,7 @@ HELP_TEXT = ('Help:\n\n'
     'Why is my Net Profit lower than expected?\n'
     'Your Net Profit is calculated after deducting all associated costs, including Price Impact, Transfer Tax, Dex Fees, and a {fee}% BeamBot fee. This ensures the figure you see is what you actually receive, accounting for all transaction-related expenses.\n\n'
 
-    'Further questions? Join our Telegram group: https://t.me/BeambotXYZ\n'
+    'Further questions? Join our Telegram group: https://t.me/beambotchat\n'
     )
 
 
