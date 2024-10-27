@@ -83,7 +83,7 @@ def get_need_data_from_pair(pair: dict):
     h1 = price_change.get('h1', 0)
     h6 = price_change.get('h6', 0)
     h24 = price_change.get('h24', 0)
-    liquidity = pair.get('liquidity', {}).get('quote')
+    liquidity = pair.get('liquidity', {}).get('usd')
     mcap = pair.get('marketCap', 0)
 
     return {
