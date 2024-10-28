@@ -8,7 +8,7 @@ from solders.transaction_status import TransactionConfirmationStatus # type: ign
 from solana.rpc.commitment import Finalized
 
 from core import settings
-from models import User
+from models import User, Settings
 from utils import wallet
 from rpc import client
 from bot.keyboards import withdraw_confirmation, cancel_withdraw, to_home
@@ -42,8 +42,8 @@ async def withdraw_state(state: FSMContext, message: Message, session: AsyncSess
         amount = data.get('amount')
 
         await state.update_data(receiver_address=message.text)
-        db_user = await session.get(User, message.from_user.id)
-        if db_user.extra_confirmation:
+        settings = await session.get(Settings, message.from_user.id)
+        if settings.extra_confirmation:
             text = ("You're about to send a transaction. Please check the details:\n\n"
                     
                     f"To: <b>{message.text}</b>\n"

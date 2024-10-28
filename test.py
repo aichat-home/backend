@@ -102,7 +102,7 @@ async def main():
     # private_key = b'\xe5\tK4\x1d\xc7\x9f]fD\x19\x9dq\xd4]%\xda\x97\x7fP]l1\x17\xb9\xaa1\x0fx\xaf]\xa3'
     # keypair = Keypair.from_seed(private_key)
 
-    metadata = await get_metadata('EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm')
+    metadata = await get_metadata('9nK7shMd2CfWRoWEcMYKqH7KtnhiM3VkJEX5Ep1rpump')
     print(metadata)
 
 
