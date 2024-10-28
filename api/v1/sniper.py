@@ -1,17 +1,18 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from schemas import SniperNotificate
 from utils import validate, sniper
 from bot import bot
+from db import database
 
 
 router = APIRouter(tags=['Sniper'])
 
 
-@router.post('/notificate', dependencies=[validate.sniper_service_validate])
-async def notificate_sniper(session: AsyncSession, sniper_notificate: SniperNotificate):
+@router.post('/notificate')
+async def notificate_sniper(sniper_notificate: SniperNotificate, session: AsyncSession = Depends(database.get_async_session), validate = Depends(validate.sniper_service_validate)):
     order = await sniper.get_order_by_id(sniper_notificate.order_id, session)
 
     confirmed = sniper_notificate.confirmed

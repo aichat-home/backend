@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from db import Base, database
-from api import router, partners_api_router
+from api import router, partners_api_router, sniper_api_router
 from utils import validate_dependency
 from core import settings
 from admin import create_admin
@@ -26,6 +26,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(router=router, prefix='/api', dependencies=[Depends(validate_dependency)])
 app.include_router(router=partners_api_router, prefix='/api')
+app.include_router(router=sniper_api_router, prefix='/api')
 app.mount('/static', StaticFiles(directory='static'), name='static')
 admin = create_admin(app)
 
