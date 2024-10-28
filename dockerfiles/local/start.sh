@@ -1,9 +1,12 @@
 #!/bin/bash
 
+echo "Applying database migrations..."
+alembic upgrade head
+
 python bot.py &
 BOT_PID=$!
 
-uvicorn api.main:app --host 0.0.0.0 --port 8000 &
+uvicorn main:app --host 0.0.0.0 --port 8000 &
 UVICORN_PID=$!
 
 function shutdown {

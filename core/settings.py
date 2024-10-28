@@ -17,10 +17,8 @@ class Settings(BaseSettings):
     admin_wallet_address: str
     sniper_access_token: str
 
-
     model_config: SettingsConfigDict = SettingsConfigDict(
-        env_file='.env',
-        env_file_encoding='utf-8'
+        env_file=".env", env_file_encoding="utf-8"
     )
 
 
