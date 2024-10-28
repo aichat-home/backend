@@ -54,7 +54,7 @@ async def withdraw_state(state: FSMContext, message: Message, session: AsyncSess
             return 
         try:
             db_wallet = await wallet.get_wallet_by_id(session, message.from_user.id)
-            tx_sig = await wallet.send_transaction(amount * 1_000_000_000, db_wallet.encrypted_private_key, message.text)
+            tx_sig = await wallet.send_transaction(amount * 1_000_000_000 - 5000, db_wallet.encrypted_private_key, message.text)
             await message.answer(text='Transaction sent. Waiting for confirmation...')
 
             confirmation = await client.confirm_transaction(tx_sig, commitment=Finalized, sleep_seconds=5)

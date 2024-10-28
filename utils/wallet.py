@@ -123,7 +123,7 @@ async def send_transaction(lamports_amount: int, encrypted_private_key: bytes, r
         TransferParams(
             from_pubkey=sender_keypair.pubkey(),
             to_pubkey=receiver_public_key,
-            lamports=lamports_amount
+            lamports=int(lamports_amount)
         )
     )
     transaction.add(transfer_to_user)
