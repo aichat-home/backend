@@ -8,22 +8,6 @@ from core import settings
 
 
 
-def parse_init_data(token: str, raw_init_data: str):
-    is_valid = validate_init_data(token, raw_init_data)
-    if not is_valid:
-        return False
-
-    result = {}
-    for key, value in parse_qsl(raw_init_data):
-        try:
-            value = json.loads(value)
-        except json.JSONDecodeError:
-            result[key] = value
-        else:
-            result[key] = value
-    return result
-
-
 def validate_dependency(User_Init_Data: str = Header(None)):
     if not User_Init_Data or not validate_init_data(settings.telegram_token, User_Init_Data):
         raise HTTPException(
@@ -54,3 +38,13 @@ def validate_init_data(token, raw_init_data):
     secret_key = hmac.new(key=b"WebAppData", msg=token.encode(), digestmod=sha256)
 
     return hmac.new(secret_key.digest(), data_check_string.encode(), sha256).hexdigest() == init_data_hash
+
+
+
+def sniper_service_validate(x_access_token: str = Header(None)):
+    if x_access_token != settings.sniper_access_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Unauthorized'
+        )
+    return True

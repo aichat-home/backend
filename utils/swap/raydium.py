@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from rpc import client
 from session import get_session
+from core import settings
 
 from ..market import get_token_data_by_address
 from .constants import SOL_DECIMAL, SOL, TOKEN_PROGRAM_ID, UNIT_BUDGET, UNIT_PRICE, WSOL
@@ -33,7 +34,7 @@ from .utils import (
     )
 
 
-async def buy(pair_address: str, sol_in: float, slippage: int, payer_keypair: Keypair, session: AsyncSession):
+async def buy(pair_address: str, sol_in: float, slippage: int, payer_keypair: Keypair, user_id: int, session: AsyncSession):
     try:
         print(f'Pair Address: {pair_address}')
         
@@ -121,7 +122,7 @@ async def buy(pair_address: str, sol_in: float, slippage: int, payer_keypair: Ke
         print(f'Layer: {layers}')
         comission_instructions, referral_amount_fee, result = None, 0, {}
         if layers:
-            comission_instructions, referral_amount_fee = await get_all_instructions_for_referrals(888, str(public_key), fee_amount, layers, session)
+            comission_instructions, referral_amount_fee = await get_all_instructions_for_referrals(user_id, str(public_key), fee_amount, layers, session)
             print(comission_instructions, referral_amount_fee)
 
         print('Building transaction...')
@@ -132,34 +133,26 @@ async def buy(pair_address: str, sol_in: float, slippage: int, payer_keypair: Ke
 
         if create_wsol_account_instr:
             instructions.append(create_wsol_account_instr)
-            print('wsol create')
 
         if init_wsol_account_instr:
             instructions.append(init_wsol_account_instr)
-            print('init wsol')
 
         if fund_wsol_account_instr:
             instructions.append(fund_wsol_account_instr)
-            print('funs wsol')
             
         if sync_native_instr:
             instructions.append(sync_native_instr)
-            print('sync native')
         
         if token_account_instr:
             instructions.append(token_account_instr)
-            print('token instr')
         
         if comission_instructions:
             for comission_instruction in comission_instructions:
                 instructions.append(comission_instruction)
-                print('com')
 
-        platform_fee_instruction = create_fee_instruction(from_pubkey=str(public_key), to_pubkey='F1pVGrtES7xtvmtKZMMxNf7K4asrqyAzLVtc8vHBuELu', amount=fee_amount - referral_amount_fee)
+        platform_fee_instruction = create_fee_instruction(from_pubkey=str(public_key), to_pubkey=settings.admin_wallet_address, amount=fee_amount - referral_amount_fee)
         instructions.append(platform_fee_instruction)
-        print('platform')
         instructions.append(swap_instructions)
-        print('swap')
 
         latest_block_hash = await client.get_latest_blockhash()
         compiled_message = MessageV0.try_compile(
@@ -193,7 +186,7 @@ async def buy(pair_address: str, sol_in: float, slippage: int, payer_keypair: Ke
         return False
 
 
-async def sell(pair_address: str, amount, slippage, payer_keypair: Keypair, session: AsyncSession):
+async def sell(pair_address: str, amount, slippage, payer_keypair: Keypair, user_id: int, session: AsyncSession):
     try:
         print(f'Pair Address: {pair_address}')
 
@@ -264,7 +257,7 @@ async def sell(pair_address: str, amount, slippage, payer_keypair: Keypair, sess
         layers = get_layer_for_amount(price * amount_out)
         comission_instructions, referral_amount_fee, result = None, 0, {}
         if layers:
-            comission_instructions, referral_amount_fee = await get_all_instructions_for_referrals(888, str(public_key), fee_amount, layers, session)
+            comission_instructions, referral_amount_fee = await get_all_instructions_for_referrals(user_id, str(public_key), fee_amount, layers, session)
             print(comission_instructions, referral_amount_fee)
 
         print('Building transaction...')
@@ -284,7 +277,7 @@ async def sell(pair_address: str, amount, slippage, payer_keypair: Keypair, sess
             for comission_instruction in comission_instructions:
                 instructions.append(comission_instruction)
 
-        platform_fee_instruction = create_fee_instruction(from_pubkey=str(public_key), to_pubkey='F1pVGrtES7xtvmtKZMMxNf7K4asrqyAzLVtc8vHBuELu', amount=fee_amount - referral_amount_fee)
+        platform_fee_instruction = create_fee_instruction(from_pubkey=str(public_key), to_pubkey=settings.admin_wallet_address, amount=fee_amount - referral_amount_fee)
         instructions.append(platform_fee_instruction)    
 
         latest_blockhash = await client.get_latest_blockhash()

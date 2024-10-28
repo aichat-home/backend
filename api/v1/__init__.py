@@ -11,6 +11,7 @@ from .partners import router as partners_router
 
 api_router = APIRouter()
 partners_api_router = APIRouter()
+sniper_router = APIRouter()
 
 api_router.include_router(add_router, prefix='/add')
 api_router.include_router(user_router, prefix='/users')
@@ -19,3 +20,4 @@ api_router.include_router(refferals_router, prefix='/referrals')
 api_router.include_router(task_router, prefix='/task')
 api_router.include_router(farm_router, prefix='/farm')
 partners_api_router.include_router(partners_router, prefix='/partners', dependencies=[])
+sniper_router
