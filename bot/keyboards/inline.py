@@ -9,7 +9,7 @@ from models import Settings, Order
 start_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            InlineKeyboardButton(text='🤖 Join Mini App', url='https://t.me/BeamTapBot/Dapp?startapp=VHJhZGluZyBCb3Q='),
+            InlineKeyboardButton(text='🤖 Join Mini App', url='https://t.me/BeamTapBot/Dapp'),
         ],
         [
             InlineKeyboardButton(text='💳 Wallet', callback_data='wallet'),

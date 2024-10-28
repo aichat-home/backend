@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.keyboards import sniper_show_keyboar, sniper_token, cancel_sniper_config, show_all_snipers, edit_sniper_token, to_home
 from bot.states import sniper as sniper_state
 from session import get_session
-from utils import sniper, wallet, market
+from utils import sniper, wallet, metaplex
 from models import Order
 
 
@@ -25,6 +25,7 @@ async def get_new_tokens(callback_query: CallbackQuery, session: AsyncSession, s
                                 ),
                                 reply_markup=sniper_show_keyboar()
                                 )
+    await state.update_data(db_wallet=db_wallet)
 
 
 @router.callback_query(F.data == 'sniper_list')
@@ -39,22 +40,17 @@ async def sniper_list(callback_query: CallbackQuery, session: AsyncSession):
 async def refresh_snipe(callback_query: CallbackQuery, session: AsyncSession, state: FSMContext):
     try:
         data = await state.get_data()
-        client_session = get_session()
         token = callback_query.data.split('_')[1]
-        token_data = await market.get_token_data_by_address(client_session, token)
+        token_data = await metaplex.get_metadata(token)
         if token_data:
+            token_data['address'] = token
             db_wallet = await wallet.get_wallet_by_id(session, callback_query.from_user.id)
             balance = await wallet.get_wallet_balance(db_wallet.public_key)
             await state.update_data(token_data=token_data, db_wallet=db_wallet, balance=balance)
 
             text = (
-                    f'Buy <a href="https://solscan.io/token/{token}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
-                    f'💳 My Balance: <code>{balance} SOL</code>\n\n'
-
-                    f'💸  Price: {token_data["price"]}\n'
-                    f'💵  MCap: ${market.format_number(token_data["market_cap"])}\n'
-                    f'🔎  24h: {token_data["h24"]:.4f}%\n'
-                    f'💰  Liqudity: ${market.format_number(token_data["liquidity"])}\n'
+                    f'Snipe <a href="https://solscan.io/token/{token}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
+                    f'💳 My Balance: <code>{balance} SOL</code>'
                 )
             slippage = data.get('slippage', 15)
             gas = data.get('gas', 0.001)
@@ -118,6 +114,8 @@ async def create_sniper(callback_query: CallbackQuery, state: FSMContext, sessio
     token_data = data.get('token_data')
     mev = data.get('mev', True)
 
+    print(token_data)
+
     order = await sniper.create_order(
             session=session, 
             sol_amount=amount, 
@@ -131,12 +129,10 @@ async def create_sniper(callback_query: CallbackQuery, state: FSMContext, sessio
     session.add(db_wallet)
     await session.commit()
     
-    
-    
+    await callback_query.message.edit_caption(caption='Sniper created successfully', reply_markup=sniper_show_keyboar())
+
     client_session = get_session()
     await sniper.create_order_service(callback_query.from_user.id, order, db_wallet.encrypted_private_key, client_session)
-    
-    await callback_query.message.edit_caption(caption='Sniper created successfully', reply_markup=sniper_show_keyboar())
     
 
 
@@ -146,22 +142,16 @@ async def edit_sniper(callback_query: CallbackQuery, state: FSMContext, session:
     order = await sniper.get_order_by_id(int(order_id), session)
     await state.update_data(order=order)
 
-    client_session = get_session()
-    data = await state.get_data()
-    token_data = await market.get_token_data_by_address(client_session, order.token_address)
+    token_data = await metaplex.get_metadata(order.token_address)
     if token_data:
+        token_data['address'] = order.token_address
         await state.update_data(token_data=token_data)
         db_wallet = await wallet.get_wallet_by_id(session, callback_query.from_user.id)
         balance = await wallet.get_wallet_balance(db_wallet.public_key)
 
     text = (
-                f'Buy <a href="https://solscan.io/token/{order.token_address}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
-                f'💳 My Balance: <code>{balance} SOL</code>\n\n'
-
-                f'💸  Price: {token_data["price"]}\n'
-                f'💵  MCap: ${market.format_number(token_data["market_cap"])}\n'
-                f'🔎  24h: {token_data["h24"]:.4f}%\n'
-                f'💰  Liqudity: ${market.format_number(token_data["liquidity"])}\n'
+                f'Snipe <a href="https://solscan.io/token/{order.token_address}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
+                f'💳 My Balance: <code>{balance} SOL</code>'
             )
     await callback_query.message.edit_caption(caption=text, reply_markup=edit_sniper_token(order.slippage, order.gas, order.sol_amount, order.mev_protection, order.id))
 
@@ -206,18 +196,14 @@ async def change_sniper_gas(callback_query: CallbackQuery, state: FSMContext, se
             db_wallet = await wallet.get_wallet_by_id(session, callback_query.from_user.id)
             balance = await wallet.get_wallet_balance(db_wallet.public_key)
             client_session = get_session()
-            await sniper.update_order_service(callback_query.from_user.id, order, db_wallet.encrypted_private_key, client_session)
 
         text = (
-                    f'Buy <a href="https://solscan.io/token/{order.token_address}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
-                    f'💳 My Balance: <code>{balance} SOL</code>\n\n'
-
-                    f'💸  Price: {token_data["price"]}\n'
-                    f'💵  MCap: ${market.format_number(token_data["market_cap"])}\n'
-                    f'🔎  24h: {token_data["h24"]:.4f}%\n'
-                    f'💰  Liqudity: ${market.format_number(token_data["liquidity"])}\n'
+                    f'Snipe <a href="https://solscan.io/token/{order.token_address}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
+                    f'💳 My Balance: <code>{balance} SOL</code>'
                 )
         await callback_query.message.edit_caption(caption=text, reply_markup=edit_sniper_token(order.slippage, order.gas, order.sol_amount, order.mev_protection, order.id))
+        await sniper.update_order_service(callback_query.from_user.id, order, db_wallet.encrypted_private_key, client_session)
+
     except Exception as e:
         print(e)
         await callback_query.answer()

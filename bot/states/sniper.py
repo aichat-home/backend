@@ -4,7 +4,7 @@ from aiogram.fsm.state import StatesGroup, State
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from utils import market, wallet, sniper
+from utils import wallet, sniper, metaplex
 from models import Order
 from session import get_session
 from bot.keyboards import sniper_token, edit_sniper_token
@@ -34,20 +34,16 @@ async def snipe_token(message: Message, state: FSMContext, session: AsyncSession
 
 
     if current_state == SnipeState.token.state:
-        token_data = await market.get_token_data_by_address(client_session, message.text)
+        token_data = await metaplex.get_metadata(message.text)
         if token_data:
+            token_data['address'] = message.text
             db_wallet = await wallet.get_wallet_by_id(session, message.from_user.id)
             balance = await wallet.get_wallet_balance(db_wallet.public_key)
             await state.update_data(token_data=token_data, db_wallet=db_wallet, balance=balance)
 
             text = (
-                    f'Buy <a href="https://solscan.io/token/{message.text}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
-                    f'💳 My Balance: <code>{balance} SOL</code>\n\n'
-
-                    f'💸  Price: {token_data["price"]}\n'
-                    f'💵  MCap: ${market.format_number(token_data["market_cap"])}\n'
-                    f'🔎  24h: {token_data["h24"]:.4f}%\n'
-                    f'💰  Liqudity: ${market.format_number(token_data["liquidity"])}\n'
+                    f'Snipe <a href="https://solscan.io/token/{message.text}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
+                    f'💳 My Balance: <code>{balance} SOL</code>'
                 )
             slippage = data.get('slippage', 15)
             gas = data.get('gas', 0.001)
@@ -65,13 +61,8 @@ async def snipe_token(message: Message, state: FSMContext, session: AsyncSession
                 balance = data.get('balance', 0)
 
                 text = (
-                    f'Buy <a href="https://solscan.io/token/{token_data["address"]}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
-                    f'💳 My Balance: <code>{balance} SOL</code>\n\n'
-
-                    f'💸  Price: {token_data["price"]}\n'
-                    f'💵  MCap: ${market.format_number(token_data["market_cap"])}\n'
-                    f'🔎  24h: {token_data["h24"]:.4f}%\n'
-                    f'💰  Liqudity: ${market.format_number(token_data["liquidity"])}\n'
+                    f'Snipe <a href="https://solscan.io/token/{token_data["address"]}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
+                    f'💳 My Balance: <code>{balance} SOL</code>'
                 )
                 gas = data.get('gas', 0.001)
                 amount = data.get('amount', 0.1)
@@ -92,13 +83,8 @@ async def snipe_token(message: Message, state: FSMContext, session: AsyncSession
             balance = data.get('balance', 0)
 
             text = (
-                f'Buy <a href="https://solscan.io/token/{token_data["address"]}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
-                f'💳 My Balance: <code>{balance} SOL</code>\n\n'
-
-                f'💸  Price: {token_data["price"]}\n'
-                f'💵  MCap: ${market.format_number(token_data["market_cap"])}\n'
-                f'🔎  24h: {token_data["h24"]:.4f}%\n'
-                f'💰  Liqudity: ${market.format_number(token_data["liquidity"])}\n'
+                f'Snipe <a href="https://solscan.io/token/{token_data["address"]}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
+                f'💳 My Balance: <code>{balance} SOL</code>'
             )
             gas = data.get('gas', 0.001)
             slippage = data.get('slippage', 15)
@@ -117,13 +103,8 @@ async def snipe_token(message: Message, state: FSMContext, session: AsyncSession
             balance = data.get('balance', 0)
 
             text = (
-                f'Buy <a href="https://solscan.io/token/{token_data["address"]}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
-                f'💳 My Balance: <code>{balance} SOL</code>\n\n'
-
-                f'💸  Price: {token_data["price"]}\n'
-                f'💵  MCap: ${market.format_number(token_data["market_cap"])}\n'
-                f'🔎  24h: {token_data["h24"]:.4f}%\n'
-                f'💰  Liqudity: ${market.format_number(token_data["liquidity"])}\n'
+                f'Snipe <a href="https://solscan.io/token/{token_data["address"]}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
+                f'💳 My Balance: <code>{balance} SOL</code>'
             )
             amount = data.get('amount', 0.1)
             slippage = data.get('slippage', 15)
@@ -142,25 +123,22 @@ async def snipe_token(message: Message, state: FSMContext, session: AsyncSession
             order.sol_amount = amount
             session.add(order)
             await session.commit()
+            print(data)
 
             db_wallet = data.get('db_wallet')
             
-            client_session = get_session()
-            await sniper.update_order_service(message.from_user.id, order, db_wallet.encrypted_private_key, client_session)
-
             token_data = data.get('token_data', {})
             balance = data.get('balance', 0)
 
             text = (
-                f'Buy <a href="https://solscan.io/token/{token_data["address"]}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
-                f'💳 My Balance: <code>{balance} SOL</code>\n\n'
-
-                f'💸  Price: {token_data["price"]}\n'
-                f'💵  MCap: ${market.format_number(token_data["market_cap"])}\n'
-                f'🔎  24h: {token_data["h24"]:.4f}%\n'
-                f'💰  Liqudity: ${market.format_number(token_data["liquidity"])}\n'
+                f'Snipe <a href="https://solscan.io/token/{token_data["address"]}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
+                f'💳 My Balance: <code>{balance} SOL</code>'
             )
             await message.answer_photo(photo=start_photo, caption=text, reply_markup=edit_sniper_token(order.slippage, order.gas, order.sol_amount, order.mev_protection, order.id))
+            
+            client_session = get_session()
+            await sniper.update_order_service(message.from_user.id, order, db_wallet.encrypted_private_key, client_session)
+
         except Exception as e:
             print(e)
             await message.answer(text='Invalid amount')  
@@ -176,22 +154,18 @@ async def snipe_token(message: Message, state: FSMContext, session: AsyncSession
 
                 db_wallet = data.get('db_wallet')
                 
-                client_session = get_session()
-                await sniper.update_order_service(message.from_user.id, order, db_wallet.encrypted_private_key, client_session)
 
                 token_data = data.get('token_data', {})
                 balance = data.get('balance', 0)
 
                 text = (
-                    f'Buy <a href="https://solscan.io/token/{token_data["address"]}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
-                    f'💳 My Balance: <code>{balance} SOL</code>\n\n'
-
-                    f'💸  Price: {token_data["price"]}\n'
-                    f'💵  MCap: ${market.format_number(token_data["market_cap"])}\n'
-                    f'🔎  24h: {token_data["h24"]:.4f}%\n'
-                    f'💰  Liqudity: ${market.format_number(token_data["liquidity"])}\n'
+                    f'Snipe <a href="https://solscan.io/token/{token_data["address"]}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
+                    f'💳 My Balance: <code>{balance} SOL</code>'
                 )
                 await message.answer_photo(photo=start_photo, caption=text, reply_markup=edit_sniper_token(order.slippage, order.gas, order.sol_amount, order.mev_protection, order.id))
+                
+                client_session = get_session()
+                await sniper.update_order_service(message.from_user.id, order, db_wallet.encrypted_private_key, client_session)
             else:
                 await message.answer(text='Invalid slippage value. Please enter a number between 1 and 100')
         except Exception as e:
@@ -208,22 +182,18 @@ async def snipe_token(message: Message, state: FSMContext, session: AsyncSession
 
             db_wallet = data.get('db_wallet')
             
-            client_session = get_session()
-            await sniper.update_order_service(message.from_user.id, order, db_wallet.encrypted_private_key, client_session)
 
             token_data = data.get('token_data', {})
             balance = data.get('balance', 0)
 
             text = (
-                f'Buy <a href="https://solscan.io/token/{token_data["address"]}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
-                f'💳 My Balance: <code>{balance} SOL</code>\n\n'
-
-                f'💸  Price: {token_data["price"]}\n'
-                f'💵  MCap: ${market.format_number(token_data["market_cap"])}\n'
-                f'🔎  24h: {token_data["h24"]:.4f}%\n'
-                f'💰  Liqudity: ${market.format_number(token_data["liquidity"])}\n'
+                f'Snipe <a href="https://solscan.io/token/{token_data["address"]}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
+                f'💳 My Balance: <code>{balance} SOL</code>'
             )
             await message.answer_photo(photo=start_photo, caption=text, reply_markup=edit_sniper_token(order.slippage, order.gas, order.sol_amount, order.mev_protection, order.id))
+            
+            client_session = get_session()
+            await sniper.update_order_service(message.from_user.id, order, db_wallet.encrypted_private_key, client_session)
         except Exception as e:
             print(e)
             await message.answer(text='Invalid value')
