@@ -127,6 +127,9 @@ async def create_sniper(callback_query: CallbackQuery, state: FSMContext, sessio
             mev_protection=mev, 
             wallet=db_wallet.id
         )
+    db_wallet.number_of_snipes += 1
+    session.add(db_wallet)
+    await session.commit()
     
     
     
