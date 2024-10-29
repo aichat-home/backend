@@ -47,12 +47,12 @@ async def create_order_service(user_id, order: Order, private_key, session: Clie
         "slippage": order.slippage,
         "mev_protection": order.mev_protection, 
         "gas": order.gas,
-        "private_key": private_key
+        "private_key": str(private_key)
     }
     headers = {
         'x-access-token': settings.sniper_access_token
     }
-    async with session.post('http://sniper:9000/snipe', data=data, headers=headers) as response:
+    async with session.post('http://sniper:9000/snipe', json=data, headers=headers) as response:
         response = await response.json()
 
 
@@ -64,12 +64,12 @@ async def update_order_service(user_id, order: Order, private_key, session: Clie
         "slippage": order.slippage,
         "mev_protection": order.mev_protection, 
         "gas": order.gas,
-        "private_key": private_key
+        "private_key": str(private_key)
     }
     headers = {
         'x-access-token': settings.sniper_access_token
     }
-    async with session.patch(f'http://sniper:9000/snipe/{order.id}', data=data, headers=headers) as response:
+    async with session.patch(f'http://sniper:9000/snipe/{order.id}', json=data, headers=headers) as response:
         response = await response.json()
 
 
