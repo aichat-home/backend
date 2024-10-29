@@ -1,15 +1,17 @@
 from datetime import datetime
 
+from aiogram.types import WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from models import Settings, Order
+from core import settings
 
 
 start_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            InlineKeyboardButton(text='🤖 Join Mini App', url='https://t.me/BeamTapBot/Dapp'),
+            InlineKeyboardButton(text='🤖 Join Mini App', web_app=WebAppInfo(url=settings.webapp_url)),
         ],
         [
             InlineKeyboardButton(text='💳 Wallet', callback_data='wallet'),
