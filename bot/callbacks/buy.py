@@ -46,7 +46,7 @@ async def buy_token(callback_query: CallbackQuery, state: FSMContext, session: A
     if amount == 'x':
         await state.set_state(buy.BuyState.amount)
         await callback_query.message.edit_caption(caption=
-            'Enter amount',
+            f'Your balance: {balance} SOL\nEnter amount',
             reply_markup=to_home()
         )
         await callback_query.answer()

@@ -63,7 +63,7 @@ async def buy_token(
 
     pair_address = await utils.get_pair_address(token_data.get('address'), client_session)
     payer_keypair = Keypair.from_seed(wallet.decrypt_private_key(db_wallet.encrypted_private_key))
-    response = await raydium.buy(pair_address, amount, slippage, payer_keypair, session)
+    response = await raydium.buy(pair_address, amount, slippage, payer_keypair, message_or_callback.from_user.id, session)
     if response:
         if response['status'] == 'Confirmed':
             if isinstance(message_or_callback, Message):
