@@ -47,7 +47,8 @@ async def create_order_service(user_id, order: Order, private_key, session: Clie
         "slippage": order.slippage,
         "mev_protection": order.mev_protection, 
         "gas": order.gas,
-        "private_key": str(private_key)
+        "private_key": str(private_key),
+        'sol_amount': order.sol_amount
     }
     headers = {
         'x-access-token': settings.sniper_access_token
@@ -64,7 +65,8 @@ async def update_order_service(user_id, order: Order, private_key, session: Clie
         "slippage": order.slippage,
         "mev_protection": order.mev_protection, 
         "gas": order.gas,
-        "private_key": str(private_key)
+        "private_key": str(private_key),
+        'sol_amount': order.sol_amount
     }
     headers = {
         'x-access-token': settings.sniper_access_token
