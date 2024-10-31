@@ -61,9 +61,9 @@ async def buy_token(
     ):
     client_session = get_session()
 
-    pair_address = await utils.get_pair_address(token_data.get('address'), client_session)
+    pair_address, program_id = await utils.get_pair_address(token_data.get('address'), client_session)
     payer_keypair = Keypair.from_seed(wallet.decrypt_private_key(db_wallet.encrypted_private_key))
-    response = await raydium.buy(pair_address, amount, slippage, payer_keypair, message_or_callback.from_user.id, session)
+    response = await raydium.buy(pair_address, program_id, amount, slippage, payer_keypair, message_or_callback.from_user.id, session)
     if response:
         if response['status'] == 'Confirmed':
             if isinstance(message_or_callback, Message):
@@ -132,9 +132,9 @@ async def sell_token(
     ):
     client_session = get_session()
 
-    pair_address = await utils.get_pair_address(token_data['address'], client_session)
+    pair_address, program_id = await utils.get_pair_address(token_data['address'], client_session)
     payer_keypair = Keypair.from_seed(wallet.decrypt_private_key(db_wallet.encrypted_private_key))
-    response = await raydium.sell(pair_address, amount, slippage, payer_keypair)
+    response = await raydium.sell(pair_address, program_id, amount, slippage, payer_keypair)
 
     if response:
         if response['status'] == 'Confirmed':
