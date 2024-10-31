@@ -1,4 +1,4 @@
-from construct import Bytes, Int32ul, Int8ul, Int64ul, Padding, BitsInteger, BitsSwapped, BitStruct, Const, Flag, BytesInteger
+from construct import Bytes, Int32ul, Int8ul, Int64ul, Padding, BitsInteger, BitsSwapped, BitStruct, Const, Flag, BytesInteger, Array
 from construct import Struct as cStruct
 
 # NOT MY WORK, THANK YOU TO WHOEVER FIGURED THIS OUT
@@ -94,6 +94,34 @@ MARKET_STATE_LAYOUT_V3 = cStruct(
     "referrer_rebate_accrued" / Int64ul,
     Padding(7),
 )
+
+
+POOL_STATE_LAYOUT = cStruct(
+    Padding(8),
+    "amm_config" / Bytes(32),
+    "pool_creator" / Bytes(32),
+    "token_0_vault" / Bytes(32),
+    "token_1_vault" / Bytes(32),
+    "lp_mint" / Bytes(32),
+    "token_0_mint" / Bytes(32),
+    "token_1_mint" / Bytes(32),
+    "token_0_program" / Bytes(32),
+    "token_1_program" / Bytes(32),
+    "observation_key" / Bytes(32),
+    "auth_bump" / Int8ul,
+    "status" / Int8ul,
+    "lp_mint_decimals" / Int8ul,
+    "mint_0_decimals" / Int8ul,
+    "mint_1_decimals" / Int8ul,
+    "lp_supply" / Int64ul,
+    "protocol_fees_token_0" / Int64ul,
+    "protocol_fees_token_1" / Int64ul,
+    "fund_fees_token_0" / Int64ul,
+    "fund_fees_token_1" / Int64ul,
+    "open_time" / Int64ul,
+    "padding" / Array(32, Int64ul),
+)
+
 
 OPEN_ORDERS_LAYOUT = cStruct(
     Padding(5),

@@ -9,14 +9,16 @@ from .constants import (
     RAY_AUTHORITY_V4, 
     RAY_V4, 
     TOKEN_PROGRAM_ID, 
-    SOL
+    SOL,
+    RAY_CP
 )
 from .layouts import (
     LIQUIDITY_STATE_LAYOUT_V4, 
     MARKET_STATE_LAYOUT_V3, 
-    SWAP_LAYOUT
+    SWAP_LAYOUT,
+    POOL_STATE_LAYOUT
 )
-from rpc import client, RPC
+from rpc import client
 
 
 from solana.rpc.commitment import Processed
@@ -64,6 +66,37 @@ def make_swap_instruction(amount_in:int, minimum_amount_out:int, token_account_i
     except:
         return None
     
+
+def make_swap_instructions_for_cp(amount_in:int, minimum_amount_out:int, token_account_in:Pubkey, token_account_out:Pubkey, accounts:dict, owner:Keypair) -> Instruction:
+    try:
+        keys = [
+            AccountMeta(pubkey=owner.pubkey(), is_signer=True, is_writable=False),
+            AccountMeta(pubkey=RAY_AUTHORITY_V4, is_signer=False, is_writable=False),
+            AccountMeta(pubkey=accounts['amm_config'], is_signer=False, is_writable=False),
+            AccountMeta(pubkey=accounts['pool_state'], is_signer=False, is_writable=True),
+            AccountMeta(pubkey=token_account_in, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=token_account_out, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=accounts['base_vault'], is_signer=False, is_writable=True),
+            AccountMeta(pubkey=accounts['quote_vault'], is_signer=False, is_writable=True),
+            AccountMeta(pubkey=accounts['base_program'], is_signer=False, is_writable=False),
+            AccountMeta(pubkey=accounts['quote_program'], is_signer=False, is_writable=False),
+            AccountMeta(pubkey=accounts['base_mint'], is_signer=False, is_writable=False),
+            AccountMeta(pubkey=accounts['quote_mint'], is_signer=False, is_writable=False),
+            AccountMeta(pubkey=accounts['observation_key'], is_signer=False, is_writable=True)
+        ]
+
+        data = SWAP_LAYOUT.build(
+            dict(
+                instruction=9,
+                amount_in=amount_in,
+                min_amount_out=minimum_amount_out
+            )
+        )
+        return Instruction(RAY_CP, data, keys)
+    except Exception as e:
+        print(e)
+        return None
+
 
 def get_swap_and_fee_amount(amount_in: int) -> tuple[int, int] | None:
     try:
@@ -129,6 +162,32 @@ async def fetch_pool_keys(pair_address: str) -> dict:
         return None
 
 
+async def fetch_pool_keys_cp(pair_address: str):
+    try:
+        amm_id = Pubkey.from_string(pair_address)
+        amm_data = await client.get_account_info_json_parsed(amm_id)
+        amm_data = amm_data.value.data
+        amm_data_decoded = POOL_STATE_LAYOUT.parse(amm_data)
+
+        pool_keys = {
+            'amm_config': Pubkey.from_bytes(amm_data_decoded.amm_config),
+            'pool_state': Pubkey.from_bytes(amm_data_decoded.lp_mint),
+            'base_vault': Pubkey.from_bytes(amm_data_decoded.token_0_vault),
+            'quote_vault': Pubkey.from_bytes(amm_data_decoded.token_1_vault),
+            'base_program': Pubkey.from_bytes(amm_data_decoded.token_0_program),
+            'quote_program': Pubkey.from_bytes(amm_data_decoded.token_1_program),
+            'base_mint': Pubkey.from_bytes(amm_data_decoded.token_0_mint),
+            'quote_mint': Pubkey.from_bytes(amm_data_decoded.token_1_mint),
+            'observation_key': Pubkey.from_bytes(amm_data_decoded.observation_key),
+            'base_decimals': amm_data_decoded.mint_0_decimals,
+            'quote_decimals': amm_data_decoded.mint_1_decimals
+        }
+        return pool_keys
+    except Exception as e:
+        print(e)
+        return None
+
+
 async def get_token_balance(mint_str: str, public_key: str):
     try:
         response = await client.get_token_accounts_by_owner_json_parsed(
@@ -177,7 +236,8 @@ async def get_pair_address(mint, client_session: ClientSession):
         async with client_session.get(url) as response:
             response = await response.json()
         pair_address = response['data']['data'][0]['id']
-        return pair_address
+        program_id = response['data']['data'][0]['programId']
+        return pair_address, program_id
     except requests.exceptions.RequestException as e:
         print(f'An error occurred: {e}')
         return None

@@ -24,22 +24,27 @@ from session import get_session
 from core import settings
 
 from ..market import get_token_data_by_address
-from .constants import SOL_DECIMAL, SOL, TOKEN_PROGRAM_ID, UNIT_BUDGET, UNIT_PRICE, WSOL
+from .constants import SOL_DECIMAL, SOL, TOKEN_PROGRAM_ID, UNIT_BUDGET, UNIT_PRICE, WSOL, RAY_V4, RAY_CP
 from .commisions import get_all_instructions_for_referrals, get_layer_for_amount
 from .layouts import ACCOUNT_LAYOUT
 from .utils import (
     fetch_pool_keys, get_token_price, 
     make_swap_instruction, get_swap_and_fee_amount, 
-    create_fee_instruction
+    create_fee_instruction, fetch_pool_keys_cp,
+    make_swap_instructions_for_cp
     )
 
 
-async def buy(pair_address: str, sol_in: float, slippage: int, payer_keypair: Keypair, user_id: int, session: AsyncSession):
+async def buy(pair_address: str, program_id: str, sol_in: float, slippage: int, payer_keypair: Keypair, user_id: int, session: AsyncSession):
     try:
         print(f'Pair Address: {pair_address}')
         
         print('Fetching pool keys...')
-        pool_keys = await fetch_pool_keys(pair_address)
+        pool_keys = None
+        if program_id == str(RAY_V4):
+            pool_keys = await fetch_pool_keys(pair_address)
+        elif program_id == str(RAY_CP):
+            pool_keys = await fetch_pool_keys_cp(pair_address)
 
         if pool_keys is None:
             print('No pool keys found...')
@@ -111,7 +116,10 @@ async def buy(pair_address: str, sol_in: float, slippage: int, payer_keypair: Ke
                 )
             )
 
-        swap_instructions = make_swap_instruction(amount_in, minimum_amount_out, wsol_token_account, token_account, pool_keys, payer_keypair)
+        if program_id == str(RAY_V4):
+            swap_instructions = make_swap_instruction(amount_in, minimum_amount_out, wsol_token_account, token_account, pool_keys, payer_keypair)
+        else:
+            swap_instructions = make_swap_instructions_for_cp(amount_in, minimum_amount_out, wsol_token_account, token_account, pool_keys, payer_keypair)
 
         client_session = get_session()
         sol_data = await get_token_data_by_address(client_session, SOL)
@@ -122,7 +130,7 @@ async def buy(pair_address: str, sol_in: float, slippage: int, payer_keypair: Ke
         print(f'Layer: {layers}')
         comission_instructions, referral_amount_fee, result = None, 0, {}
         if layers:
-            comission_instructions, referral_amount_fee = await get_all_instructions_for_referrals(user_id, str(public_key), fee_amount, layers, session)
+            comission_instructions, referral_amount_fee, result = await get_all_instructions_for_referrals(user_id, str(public_key), fee_amount, layers, session)
             print(comission_instructions, referral_amount_fee)
 
         print('Building transaction...')
