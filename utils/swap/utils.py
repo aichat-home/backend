@@ -231,7 +231,7 @@ async def confirm_txn(txn_sig: Signature, max_retries: int = 20, retry_interval:
 
 
 async def get_pair_address(mint, client_session: ClientSession):
-    url = f'https://api-v3.raydium.io/pools/info/mint?mint1={mint}&poolType=all&poolSortField=default&sortType=desc&pageSize=1&page=1'
+    url = f'https://api-v3.raydium.io/pools/info/mint?mint1={mint}&poolType=standard&poolSortField=default&sortType=desc&pageSize=1&page=1'
     try:
         async with client_session.get(url) as response:
             response = await response.json()
