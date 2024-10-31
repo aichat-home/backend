@@ -171,7 +171,7 @@ async def fetch_pool_keys_cp(pair_address: str):
 
         pool_keys = {
             'amm_config': Pubkey.from_bytes(amm_data_decoded.amm_config),
-            'pool_state': Pubkey.from_bytes(amm_data_decoded.lp_mint),
+            'pool_state': Pubkey.from_string(pair_address),
             'base_vault': Pubkey.from_bytes(amm_data_decoded.token_0_vault),
             'quote_vault': Pubkey.from_bytes(amm_data_decoded.token_1_vault),
             'base_program': Pubkey.from_bytes(amm_data_decoded.token_0_program),
