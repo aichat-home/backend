@@ -64,8 +64,12 @@ async def show_token(callback_query: CallbackQuery, session: AsyncSession, state
     sell_price = None
 
     if average_buy_price:
-        pair_address = await utils.get_pair_address(mint, client_session)
-        pool_keys = await utils.fetch_pool_keys(pair_address)
+        pair_address, program_id = await utils.get_pair_address(mint, client_session)
+
+        if program_id == constants.RAY_V4:
+            pool_keys = await utils.fetch_pool_keys(pair_address)
+        elif program_id == constants.RAY_CP:
+            pool_keys = await utils.fetch_pool_keys_cp(pair_address)
         token_price, token_decimals = await utils.get_token_price(pool_keys)
         sell_price = token_price * constants.SOL_DECIMAL / (10 ** token_decimals)
 
