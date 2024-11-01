@@ -144,6 +144,13 @@ SWAP_LAYOUT = cStruct(
     "instruction" / Int8ul, "amount_in" / Int64ul, "min_amount_out" / Int64ul
 )
 
+CP_SWAP_LAYOUT = cStruct(
+    "instruction" / Int8ul,
+    "amount_in" / Int64ul,
+    "min_amount_out" / Int64ul
+)
+
+
 PUBLIC_KEY_LAYOUT = Bytes(32)
 
 ACCOUNT_LAYOUT = cStruct(
