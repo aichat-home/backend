@@ -75,12 +75,12 @@ async def buy(output_mint: str, sol_in: float, slippage: float, payer_keypair: K
         print('Building transaction...')
                 
         
-        # if comission_instructions:
-        #     for comission_instruction in comission_instructions:
-        #         instructions.append(comission_instruction)
+        if comission_instructions:
+            for comission_instruction in comission_instructions:
+                instructions.append(comission_instruction)
 
-        # platform_fee_instruction = create_fee_instruction(from_pubkey=str(public_key), to_pubkey=settings.admin_wallet_address, amount=fee_amount - referral_amount_fee)
-        # instructions.append(platform_fee_instruction)
+        platform_fee_instruction = create_fee_instruction(from_pubkey=str(public_key), to_pubkey=settings.admin_wallet_address, amount=fee_amount - referral_amount_fee)
+        instructions.append(platform_fee_instruction)
 
         latest_block_hash = await client.get_latest_blockhash()
         compiled_message = MessageV0.try_compile(
@@ -145,12 +145,12 @@ async def sell(input_mint: str, amount, slippage, payer_keypair: Keypair, user_i
         print('Building transaction...')
         
         
-        # if comission_instructions:
-        #     for comission_instruction in comission_instructions:
-        #         instructions.append(comission_instruction)
+        if comission_instructions:
+            for comission_instruction in comission_instructions:
+                instructions.append(comission_instruction)
 
-        # platform_fee_instruction = create_fee_instruction(from_pubkey=str(public_key), to_pubkey=settings.admin_wallet_address, amount=fee_amount - referral_amount_fee)
-        # instructions.append(platform_fee_instruction)    
+        platform_fee_instruction = create_fee_instruction(from_pubkey=str(public_key), to_pubkey=settings.admin_wallet_address, amount=fee_amount - referral_amount_fee)
+        instructions.append(platform_fee_instruction)    
 
         latest_blockhash = await client.get_latest_blockhash()
         compiled_message = MessageV0.try_compile(
