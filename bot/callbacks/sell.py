@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.keyboards import sell_keyboard, sell_token as sell_token_keyboard, to_home, swap_confirmation
 from bot.states import sell
-from utils import wallet, market, image
+from utils import wallet, market, image, metaplex
 from session import get_session
 from models import Settings
 from utils.swap import swap, utils, constants
@@ -18,22 +18,11 @@ router = Router()
 
 @router.callback_query(lambda c: c.data == 'sell')
 async def sell_token(callback_query: CallbackQuery, session: AsyncSession):
-    client_session = get_session()
     db_wallet = await wallet.get_wallet_by_id(session, callback_query.from_user.id)
 
     tokens = await wallet.get_tokens(db_wallet.public_key)
-    mints = await market.get_mints(client_session)
 
-    response_token = []
-    for token in tokens.value:
-        data = token.account.data.parsed['info']
-        mint = data.get('mint')
-        amount = data.get('tokenAmount', {}).get('uiAmount', 0)
-        data = market.get_token_symbol(mint, mints)
-        symbol = data.get('symbol')
-
-        # if amount:
-        response_token.append((mint, amount, symbol))
+    response_token = await metaplex.get_multiple_token_metada(tokens.value)
 
     await callback_query.message.edit_caption(caption='Your tokens: ', reply_markup=sell_keyboard(response_token))
     await callback_query.answer()
@@ -60,25 +49,10 @@ async def show_token(callback_query: CallbackQuery, session: AsyncSession, state
     pnl, average_buy_price = await wallet.get_average_buy_price_and_pnl(db_wallet.id, mint, session)
     pnl = f'{pnl:.2f}%' if pnl != 0 else 'N/A'
 
-    profit_can_made = 'N/A'
-    sell_price = None
-
-    if average_buy_price:
-        pair_address, program_id = await utils.get_pair_address(mint, client_session)
-
-        if program_id == constants.RAY_V4:
-            pool_keys = await utils.fetch_pool_keys(pair_address)
-        elif program_id == constants.RAY_CP:
-            pool_keys = await utils.fetch_pool_keys_cp(pair_address)
-        token_price, token_decimals = await utils.get_token_price(pool_keys)
-        sell_price = token_price * constants.SOL_DECIMAL / (10 ** token_decimals)
-
-        profit_can_made = f'{(sell_price / average_buy_price) * 100 - 100:.2f}%'
-
-
     if token_data:
         text = (
             f'Sell <a href="https://solscan.io/token/{mint}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
+            f'<code>{mint}</code>\n'
             f'💳 My Balance: <code>{amount} {token_data["symbol"].upper()}</code> (${token_data["price"] * amount:.2f})\n\n'
 
             f'💸  Price: {token_data["price"]}\n'
@@ -88,8 +62,7 @@ async def show_token(callback_query: CallbackQuery, session: AsyncSession, state
 
             f'Statistics: \n\n'
 
-            f'PNL: {pnl}\n'
-            f'Profit Can Made: {profit_can_made}'
+            f'PNL: {pnl}'
         )
         reply_markup = sell_token_keyboard(mint)
 
@@ -178,6 +151,7 @@ async def sell_token_amount(callback_query: CallbackQuery, session: AsyncSession
             slippage=settings.sell_slippage,
             amount=amount,
             message_or_callback=callback_query,
+            decimals=decimals,
             session=session,
         )
 

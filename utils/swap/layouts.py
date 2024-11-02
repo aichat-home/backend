@@ -1,6 +1,8 @@
 from construct import Bytes, Int32ul, Int8ul, Int64ul, Padding, BitsInteger, BitsSwapped, BitStruct, Const, Flag, BytesInteger, Array
 from construct import Struct as cStruct
 
+from borsh_construct import U128, CStruct as BorshStruct
+
 # NOT MY WORK, THANK YOU TO WHOEVER FIGURED THIS OUT
 
 LIQUIDITY_STATE_LAYOUT_V4 = cStruct(
@@ -144,10 +146,10 @@ SWAP_LAYOUT = cStruct(
     "instruction" / Int8ul, "amount_in" / Int64ul, "min_amount_out" / Int64ul
 )
 
+
 CP_SWAP_LAYOUT = cStruct(
-    "instruction" / Int8ul,
     "amount_in" / Int64ul,
-    "min_amount_out" / Int64ul
+    "minimum_amount_out" / Int64ul,
 )
 
 
@@ -165,4 +167,12 @@ ACCOUNT_LAYOUT = cStruct(
     "delegated_amount" / Int64ul,
     "close_authority_option" / Int32ul,
     "close_authority" / PUBLIC_KEY_LAYOUT,
+)
+
+
+schema = BorshStruct(
+    "field1" / U128,
+    "field2" / U128,
+    "field3" / U128,
+    # Add more U128 fields if needed
 )

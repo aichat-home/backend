@@ -59,11 +59,8 @@ async def buy_token(
         session: AsyncSession,
         photo = None,
     ):
-    client_session = get_session()
-
-    pair_address, program_id = await utils.get_pair_address(token_data.get('address'), client_session)
     payer_keypair = Keypair.from_seed(wallet.decrypt_private_key(db_wallet.encrypted_private_key))
-    response = await raydium.buy(pair_address, program_id, amount, slippage, payer_keypair, message_or_callback.from_user.id, session)
+    response = await raydium.buy(token_data['address'], amount, slippage, payer_keypair, message_or_callback.from_user.id, session)
     if response:
         if response['status'] == 'Confirmed':
             if isinstance(message_or_callback, Message):
@@ -75,19 +72,19 @@ async def buy_token(
                     session,
                     constants.SOL,
                     token_data['address'],
-                    response['amount_in'] * constants.SOL_DECIMAL,
-                    response['minimum_amount_out'] * (10 ** response['token_decimal']),
+                    response['amount_in'],
+                    response['minimum_amount_out'],
                     str(response['txn_sig'])
                 )
             confirmed = await utils.confirm_txn(response['txn_sig'])
             if confirmed:
-                trading_points = response['minimum_amount_out'] * token_data['price']
+                trading_points = response['amount_in'] / constants.SOL_DECIMAL * token_data['price']
                 text = texts.SUCCESSFULL_TRANSACTION.format(
                     input_symbol='SOL',
                     output_symbol=token_data['symbol'],
-                    in_amount=response['amount_in'],
-                    out_amount=response['minimum_amount_out'],
-                    fee_amount=response['fee_amount'],
+                    in_amount=response['amount_in'] / constants.SOL_DECIMAL,
+                    out_amount=response['minimum_amount_out'] / (10 ** response['token_decimal']),
+                    fee_amount=response['fee_amount'] / constants.SOL_DECIMAL,
                     txn_sig=str(response['txn_sig']),
                     trading_points=trading_points
                 )
@@ -128,13 +125,11 @@ async def sell_token(
         amount: int,
         message_or_callback: Message | CallbackQuery,
         session: AsyncSession,
+        decimals: int,
         photo = None,
     ):
-    client_session = get_session()
-
-    pair_address, program_id = await utils.get_pair_address(token_data['address'], client_session)
     payer_keypair = Keypair.from_seed(wallet.decrypt_private_key(db_wallet.encrypted_private_key))
-    response = await raydium.sell(pair_address, program_id, amount, slippage, payer_keypair)
+    response = await raydium.sell(token_data['address'], amount, slippage, payer_keypair, message_or_callback.from_user.id, decimals, session)
 
     if response:
         if response['status'] == 'Confirmed':
@@ -155,12 +150,12 @@ async def sell_token(
             
             confirmed = await utils.confirm_txn(response['txn_sig'])
             if confirmed:
-                trading_points = response['token_in'] * token_data['price']
+                trading_points = response['sol_out'] / constants.SOL_DECIMAL * token_data['price']
                 text = texts.SUCCESSFULL_TRANSACTION.format(
                     input_symbol=token_data['symbol'],
                     output_symbol='SOL',
-                    in_amount=response['token_in'],
-                    out_amount=response['sol_out'],
+                    in_amount=response['token_in'] / 10 ** decimals,
+                    out_amount=response['sol_out'] / constants.SOL_DECIMAL,
                     fee_amount=response['fee_amount'],
                     txn_sig=str(response['txn_sig']),
                     trading_points=trading_points
