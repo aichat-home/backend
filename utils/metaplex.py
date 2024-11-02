@@ -98,6 +98,6 @@ async def parse_info(token):
 
 
 async def get_multiple_token_metada(tokens: list[RpcKeyedAccountJsonParsed]):
-    tasks = [parse_info(token) for token in tokens if token.account.data.parsed.get('info', {}).get('mint', '') != SOL]
+    tasks = [parse_info(token) for token in tokens if token.account.data.parsed.get('info', {}).get('mint', '') != SOL and token.account.data.parsed.get('info', {}).get('tokenAmount', {}).get('uiAmount', 0) != 0]
     response_token = await asyncio.gather(*tasks)
     return response_token
