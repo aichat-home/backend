@@ -1,8 +1,11 @@
+import asyncio
 import base58
 import struct
 
 from solders.pubkey import Pubkey # type: ignore
+from solders.rpc.responses import RpcKeyedAccountJsonParsed # type: ignore
 
+from .swap.constants import SOL
 from rpc import client
 
 
@@ -82,3 +85,19 @@ async def get_metadata(mint_key):
         metadata = unpack_metadata_account(encoded_data)
         return metadata.get('data')
     return None
+
+
+async def parse_info(token):
+    data = token.account.data.parsed['info']
+    mint = data.get('mint')
+    amount = data.get('tokenAmount', {}).get('uiAmount', 0)
+    data = await get_metadata(mint)
+    symbol = data.get('symbol')
+
+    return (mint, amount, symbol)
+
+
+async def get_multiple_token_metada(tokens: list[RpcKeyedAccountJsonParsed]):
+    tasks = [parse_info(token) for token in tokens if token.account.data.parsed.get('info', {}).get('mint', '') != SOL]
+    response_token = await asyncio.gather(*tasks)
+    return response_token

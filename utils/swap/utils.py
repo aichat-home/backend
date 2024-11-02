@@ -3,6 +3,7 @@ import time
 import requests
 from aiohttp import ClientSession
 
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .constants import (
     OPEN_BOOK_PROGRAM, 
@@ -10,6 +11,8 @@ from .constants import (
     RAY_V4, 
     TOKEN_PROGRAM_ID, 
     SOL,
+    WSOL,
+    SOL_DECIMAL,
     RAY_CP,
     RAY_VAULT_AUTHORITY
 )
@@ -18,8 +21,10 @@ from .layouts import (
     MARKET_STATE_LAYOUT_V3, 
     SWAP_LAYOUT,
     POOL_STATE_LAYOUT,
-    CP_SWAP_LAYOUT
+    CP_SWAP_LAYOUT,
+    ACCOUNT_LAYOUT
 )
+
 from rpc import client
 
 
@@ -31,7 +36,18 @@ from solders.instruction import Instruction  # type: ignore
 from solders.keypair import Keypair  # type: ignore
 from solders.pubkey import Pubkey  # type: ignore
 from solders.system_program import TransferParams, transfer
+from solders.compute_budget import set_compute_unit_limit, set_compute_unit_price  # type: ignore
+from solders.system_program import CreateAccountParams, TransferParams, create_account, transfer
 
+from spl.token.async_client import AsyncToken
+from spl.token.instructions import (
+    InitializeAccountParams,
+    SyncNativeParams,
+    create_associated_token_account,
+    get_associated_token_address,
+    initialize_account,
+    sync_native,
+)
 
 
 def make_swap_instruction(amount_in:int, minimum_amount_out:int, token_account_in:Pubkey, token_account_out:Pubkey, accounts:dict, owner:Keypair) -> Instruction:
@@ -65,7 +81,8 @@ def make_swap_instruction(amount_in:int, minimum_amount_out:int, token_account_i
             )
         )
         return Instruction(RAY_V4, data, keys)
-    except:
+    except Exception as e:
+        print(e)
         return None
     
 
@@ -89,12 +106,11 @@ def make_swap_instructions_for_cp(amount_in:int, minimum_amount_out:int, token_a
 
         data = CP_SWAP_LAYOUT.build(
             dict(
-                instruction=8,
                 amount_in=amount_in,
-                min_amount_out=minimum_amount_out
+                minimum_amount_out=minimum_amount_out
             )
         )
-        return Instruction(RAY_CP, data, keys)
+        return Instruction(RAY_CP, 'CVUETIGUSI67GE467VIW47', keys)
     except Exception as e:
         print(e)
         return None
@@ -240,9 +256,9 @@ async def get_pair_address(mint, client_session: ClientSession):
         pair_address = response['data']['data'][0]['id']
         program_id = response['data']['data'][0]['programId']
         return pair_address, program_id
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         print(f'An error occurred: {e}')
-        return None
+        return None, None
 
 
 async def get_token_price(pool_keys: dict) -> tuple:
@@ -294,3 +310,6 @@ async def get_token_price(pool_keys: dict) -> tuple:
         # Handle any exceptions that occur during execution and return None
         print(f'Error occurred: {e}')
         return None, None   
+    
+
+
