@@ -64,7 +64,9 @@ async def get_jupiter_instructions(session: ClientSession, quote: dict, public_k
     data = {
         'quoteResponse': quote,
         'userPublicKey': public_key,
-        'wrapAndUnwrapSol': True
+        'wrapAndUnwrapSol': True,
+        'prioritizationFeeLamports': 'auto',
+        'dynamicComputeUnitLimit': True
     }
     headers = {
       'Content-Type': 'application/json'
