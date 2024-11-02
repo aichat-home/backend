@@ -10,13 +10,15 @@ from .constants import (
     RAY_V4, 
     TOKEN_PROGRAM_ID, 
     SOL,
-    RAY_CP
+    RAY_CP,
+    RAY_VAULT_AUTHORITY
 )
 from .layouts import (
     LIQUIDITY_STATE_LAYOUT_V4, 
     MARKET_STATE_LAYOUT_V3, 
     SWAP_LAYOUT,
-    POOL_STATE_LAYOUT
+    POOL_STATE_LAYOUT,
+    CP_SWAP_LAYOUT
 )
 from rpc import client
 
@@ -71,7 +73,7 @@ def make_swap_instructions_for_cp(amount_in:int, minimum_amount_out:int, token_a
     try:
         keys = [
             AccountMeta(pubkey=owner.pubkey(), is_signer=True, is_writable=False),
-            AccountMeta(pubkey=RAY_AUTHORITY_V4, is_signer=False, is_writable=False),
+            AccountMeta(pubkey=RAY_VAULT_AUTHORITY, is_signer=False, is_writable=False),
             AccountMeta(pubkey=accounts['amm_config'], is_signer=False, is_writable=False),
             AccountMeta(pubkey=accounts['pool_state'], is_signer=False, is_writable=True),
             AccountMeta(pubkey=token_account_in, is_signer=False, is_writable=True),
@@ -85,9 +87,9 @@ def make_swap_instructions_for_cp(amount_in:int, minimum_amount_out:int, token_a
             AccountMeta(pubkey=accounts['observation_key'], is_signer=False, is_writable=True)
         ]
 
-        data = SWAP_LAYOUT.build(
+        data = CP_SWAP_LAYOUT.build(
             dict(
-                instruction=9,
+                instruction=8,
                 amount_in=amount_in,
                 min_amount_out=minimum_amount_out
             )

@@ -30,14 +30,10 @@ async def main():
 
     init_session()
     session = get_session()
-    pair_address = await utils.get_pair_address('UwU8RVXB69Y6Dcju6cN2Qef6fykkq6UUNpB15rZku6Z', session)
+    # print(await wallet.get_token('Di25V25JyAe9nWmrxgnPxvamNr4z4dc4nBR4VYTLuMR2', 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm'))
+    text = '61SzCon9af3yaytQPjiYcG7'
 
-    amm_id = Pubkey.from_string(pair_address)
-    amm_data = await client.get_account_info_json_parsed(amm_id)
-    amm_data = amm_data.value.data
-    amm_data_decoded = layouts.POOL_STATE_LAYOUT.parse(amm_data)
-    print(amm_data_decoded)
-
+    print(base58.b58decode(text))
 
     await session.close()
 
