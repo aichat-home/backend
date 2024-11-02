@@ -7,7 +7,7 @@ services:
     build:
       # path to the directory containing the Dockerfile
       context: .
-      dockerfile: ./dockerfiles/prod/Dockerfile
+      dockerfile: ./dockerfiles/local/Dockerfile
       # Specify the image name
     image: products_api
 

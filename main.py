@@ -24,24 +24,24 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(router=router, prefix='/api', dependencies=[Depends(validate_dependency)])
-app.include_router(router=partners_api_router, prefix='/api')
-app.include_router(router=sniper_api_router, prefix='/api')
-app.mount('/static', StaticFiles(directory='static'), name='static')
+app.include_router(
+    router=router, prefix="/api", dependencies=[Depends(validate_dependency)]
+)
+app.include_router(router=partners_api_router, prefix="/api")
+app.include_router(router=sniper_api_router, prefix="/api")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 admin = create_admin(app)
 
 
-origins = [
-    settings.webapp_url
-]
+origins = [settings.webapp_url]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-if __name__ == '__main__':
-    uvicorn.run('main:app', reload=True)
+if __name__ == "__main__":
+    uvicorn.run("main:app", reload=True)
