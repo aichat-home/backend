@@ -74,6 +74,7 @@ async def sell_token(message: Message, state: FSMContext, session: AsyncSession)
         amount=amount,
         message_or_callback=message,
         session=session,
-        photo=start_photo
+        photo=start_photo,
+        decimals=decimals
     )
 
