@@ -4,6 +4,7 @@ from aiohttp import ClientSession
 from session import get_session, init_session
 from rpc import client
 from utils.swap.utils import create_fee_instruction
+from utils import wallet
 
 import base64
 from solders.keypair import Keypair # type: ignore
@@ -123,12 +124,12 @@ async def main():
     init_session()
     session = get_session()
     
-    public_key = 'F1pVGrtES7xtvmtKZMMxNf7K4asrqyAzLVtc8vHBuELu'
-    output_mint = '2VRbHRxjDxoA6yQhZJqm1Xt2jCtjFa2PVkNWsaQwpump'
-    amount = 0.001
+    # public_key = 'F1pVGrtES7xtvmtKZMMxNf7K4asrqyAzLVtc8vHBuELu'
+    # output_mint = '2VRbHRxjDxoA6yQhZJqm1Xt2jCtjFa2PVkNWsaQwpump'
+    # amount = 0.001
 
-    quote = await get_quote(session, output_mint, amount, 5)
-    print(quote)
+    # quote = await get_quote(session, output_mint, amount, 5)
+    # print(quote)
     # jupiter_instructions = await get_jupiter_instructions(session, quote, public_key)
     # tables_accounts = await get_address_lookup_table_accounts(jupiter_instructions['addressLookupTableAddresses'])
     
@@ -150,6 +151,8 @@ async def main():
     # txn_sig = txn_sig.value
     # print(txn_sig)
 
+    token = await wallet.get_tokens('7PxdDumxtxhaQLLnLdib1fZx6tfznPoaeAQZ8AXv8Bcr')
+    print(token)
     await session.close()
 
 

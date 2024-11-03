@@ -39,7 +39,9 @@ async def show_token(callback_query: CallbackQuery, session: AsyncSession, state
     amount = 0
 
     if token:
-        amount = token.value[0].account.data.parsed['info'].get('tokenAmount', {}).get('uiAmount', 0)
+        value = token.value
+        if value:
+            amount = value[0].account.data.parsed['info'].get('tokenAmount', {}).get('uiAmount', 0)
         await callback_query.answer()
 
     client_session = get_session()
