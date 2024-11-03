@@ -39,7 +39,7 @@ async def remove_order(order_id: int, session: AsyncSession):
 
 
 
-async def create_order_service(user_id, order: Order, private_key, session: ClientSession):
+async def create_order_service(user_id, order: Order, private_key: bytes, session: ClientSession):
     data = {
         "user_id": user_id,
         "order_id": order.id,
@@ -47,7 +47,7 @@ async def create_order_service(user_id, order: Order, private_key, session: Clie
         "slippage": order.slippage,
         "mev_protection": order.mev_protection, 
         "gas": order.gas,
-        "private_key": str(private_key),
+        "private_key": private_key.decode(),
         'sol_amount': order.sol_amount
     }
     headers = {
@@ -57,7 +57,7 @@ async def create_order_service(user_id, order: Order, private_key, session: Clie
         response = await response.json()
 
 
-async def update_order_service(user_id, order: Order, private_key, session: ClientSession):
+async def update_order_service(user_id, order: Order, private_key: bytes, session: ClientSession):
     data = {
         "user_id": user_id,
         "order_id": order.id,
@@ -65,7 +65,7 @@ async def update_order_service(user_id, order: Order, private_key, session: Clie
         "slippage": order.slippage,
         "mev_protection": order.mev_protection, 
         "gas": order.gas,
-        "private_key": str(private_key),
+        "private_key": private_key.decode(),
         'sol_amount': order.sol_amount
     }
     headers = {

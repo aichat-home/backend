@@ -151,7 +151,7 @@ async def main():
     # txn_sig = txn_sig.value
     # print(txn_sig)
 
-    token = await wallet.get_tokens('7PxdDumxtxhaQLLnLdib1fZx6tfznPoaeAQZ8AXv8Bcr')
+    token = await wallet.get_token('7PxdDumxtxhaQLLnLdib1fZx6tfznPoaeAQZ8AXv8Bcr', 'BZ1fTDtwXiyK32cLG7dLLmRWyKeghFHLkkiVGuruTvgz')
     print(token)
     await session.close()
 
