@@ -182,22 +182,18 @@ async def get_average_buy_price_and_pnl(wallet_id: int, token_address: str, sess
     '''Calculate profit and loss for a given wallet'''
     try:
         buy_swaps = await get_buy_swaps(wallet_id, token_address, session)
-        sell_swaps = await get_sell_swaps(wallet_id, token_address, session)
 
         if not buy_swaps:
-            return 0, 0
+            return 0
 
         buy_input_amount, buy_output_amount = get_total_amount(buy_swaps)
-        sell_input_amount, sell_output_amount = get_total_amount(sell_swaps)
 
         average_buy_price = buy_input_amount / buy_output_amount
-        average_sell_price = sell_output_amount / sell_input_amount
 
-        if not buy_swaps and not sell_swaps:
-            return 0, average_buy_price
+        if not buy_swaps:
+            return average_buy_price
 
-        pnl = calculate_pnl(average_buy_price, average_sell_price)
-        return pnl, average_buy_price
+        return average_buy_price
     except Exception as e:
         print(f"Error: {e}")
         return 0, 0

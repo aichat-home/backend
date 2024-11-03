@@ -9,8 +9,7 @@ from bot.states import sell
 from utils import wallet, market, image, metaplex
 from session import get_session
 from models import Settings
-from utils.swap import swap, utils, constants
-
+from utils.swap import swap, utils, constants, jupiter
 
 
 router = Router()
@@ -46,8 +45,25 @@ async def show_token(callback_query: CallbackQuery, session: AsyncSession, state
     client_session = get_session()
     token_data = await market.get_token_data_by_address(client_session, mint)
     await state.update_data(token_data=token_data)
-    pnl, average_buy_price = await wallet.get_average_buy_price_and_pnl(db_wallet.id, mint, session)
-    pnl = f'{pnl:.2f}%' if pnl != 0 else 'N/A'
+    average_buy_price = await wallet.get_average_buy_price_and_pnl(db_wallet.id, mint, session)
+    pnl = 'N/A'
+
+
+    if average_buy_price:
+        quote = await jupiter.get_quote(
+            input_mint=mint,
+            output_mint='So11111111111111111111111111111111111111112',
+            amount=int(amount * 10 ** 9),
+            slippage=5,
+            session=client_session,
+            )
+        if quote:
+            in_amount = quote.get('inAmount')
+            out_amount = quote.get('outAmount')
+
+        if in_amount and out_amount:
+            sell_price = float(out_amount) / float(in_amount)
+            pnl = f'{(sell_price / average_buy_price) * 100 - 100:.2f}%'
 
     if token_data:
         text = (
