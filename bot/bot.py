@@ -1,28 +1,17 @@
-import asyncio
-
-import base64
-from typing import Callable, Dict, Any
-
 from aiogram import Bot, Dispatcher
-from aiogram.types import Message, FSInputFile, TelegramObject
-from aiogram.filters import CommandStart, Command
-from aiogram import BaseMiddleware
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
-from aiogram.exceptions import TelegramBadRequest
-
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums.parse_mode import ParseMode
 
 from core import settings
-from .inline import inline_builder
 from db import database
-from models import User, Partner
+from bot.middlewares import DbSessionMiddleware
 
 
-bot = Bot(settings.telegram_token)
+bot = Bot(settings.telegram_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
 
+<<<<<<< HEAD
+=======
 ADMIN_IDS = (540314239, 1795945549)
 
 photo = FSInputFile('bot/media/start.png')
@@ -135,4 +124,5 @@ async def send_message_to_user(user_id, text):
         print(f'Error sending message to {user_id}: {e}')
 
 
+>>>>>>> dev
 dp.update.middleware(DbSessionMiddleware(database))

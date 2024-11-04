@@ -7,7 +7,7 @@ services:
     build:
       # path to the directory containing the Dockerfile
       context: .
-
+      dockerfile: ./dockerfiles/prod/Dockerfile
       # Specify the image name
     image: products_api
 
@@ -23,7 +23,7 @@ services:
     env_file:
       - ./.env
     networks:
-      - default
+      - bluebeam_shared_network
     # Define a dependency on the "products_db" service, so it starts first
     depends_on:
       - products_db
@@ -43,10 +43,12 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=123456
       - POSTGRES_DATABASE=aichat
+    networks:
+      - bluebeam_shared_network
 
 # Define a volume for persisting postgreSQL data
 volumes:
   postgres_data:
 networks:
-  default:
-    driver: bridge
+  bluebeam_shared_network:
+    external: true

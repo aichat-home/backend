@@ -13,7 +13,8 @@ from models import (
     Wallet, 
     RefferAccount,
     Reward, 
-    Farm
+    Farm,
+    Settings
     )
 
 from schemas import UserCreate
@@ -215,3 +216,11 @@ async def get_user_rank(session: AsyncSession, wallet_id: int):
 
 async def get_reffer_account(user_id: int, session: AsyncSession):
     return await session.get(RefferAccount, user_id)
+
+
+
+async def get_settings(user_id, session: AsyncSession):
+    stmt = select(Settings).filter(Settings.id == user_id)
+    result = await session.execute(stmt)
+    settings = result.scalars().first()
+    return settings

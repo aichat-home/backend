@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-from models.user import User, Account, RefferAccount, Wallet, Partner, Task, Reward, Farm
+from models.user import User, Account, RefferAccount, Wallet, Partner, Task, Reward, Farm, SolanaWallet, Swap, Withdraw
 from models.account_to_task import AccountToTask
 
 
