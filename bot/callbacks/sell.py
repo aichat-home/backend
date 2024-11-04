@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.keyboards import sell_keyboard, sell_token as sell_token_keyboard, to_home, swap_confirmation
 from bot.states import sell
 from utils import wallet, market, image, metaplex
+from rpc import mainnet_client
 from session import get_session
 from models import Settings
 from utils.swap import swap, utils, constants, jupiter
@@ -35,7 +36,7 @@ async def show_token(callback_query: CallbackQuery, session: AsyncSession, state
     
 
     db_wallet = await wallet.get_wallet_by_id(session, callback_query.from_user.id)
-    token = await wallet.get_token(db_wallet.public_key, mint)
+    token = await wallet.get_token(db_wallet.public_key, mint, mainnet_client)
     amount = 0
 
     if token:
@@ -148,7 +149,7 @@ async def sell_token_amount(callback_query: CallbackQuery, session: AsyncSession
         
         settings = await session.get(Settings, callback_query.from_user.id)
         
-        token = await wallet.get_token(db_wallet.public_key, mint)
+        token = await wallet.get_token(db_wallet.public_key, mint, mainnet_client)
         mint, balance, decimals = wallet.parse_token_mint_address_amount_decimals(token.value[0])
         amount = balance * (percent / 100)
 

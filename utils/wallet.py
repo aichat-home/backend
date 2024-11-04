@@ -83,7 +83,7 @@ async def get_tokens(wallet_address: str):
     tokens = await client.get_token_accounts_by_owner_json_parsed(wallet_address, opts=opts)
     return tokens
 
-async def get_token(wallet_address: str, input_mint: str):
+async def get_token(wallet_address: str, input_mint: str, client=client):
     '''Get a token by mint address'''
     wallet_address = Pubkey.from_string(wallet_address)
     tokens = await client.get_token_accounts_by_owner_json_parsed(wallet_address, TokenAccountOpts(
