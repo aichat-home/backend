@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from .v1 import api_router as v1_router, partners_api_router
+from .v1 import api_router as v1_router, partners_api_router, sniper_api_router
 
 
 router = APIRouter()
