@@ -111,6 +111,7 @@ class Task(Base):
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
     link: Mapped[str] = mapped_column(Text, nullable=True)
     chatId: Mapped[str] = mapped_column(Text, nullable=True)
+    rank: Mapped[int] = mapped_column(Integer, nullable=True)
 
     usersCompleted: Mapped[list['Account']] = relationship(
         'Account',
