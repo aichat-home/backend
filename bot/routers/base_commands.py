@@ -54,5 +54,6 @@ async def start(message: Message, session: AsyncSession, state: FSMContext):
         db_wallet = await wallet.create_wallet(session, message.from_user.id)
 
     balance = await wallet.get_wallet_balance(db_wallet.public_key)
-    await message.answer_photo(start_photo, caption=texts.START_TEXT.format(balance=balance, wallet_address=db_wallet.public_key), reply_markup=start_keyboard)
+    number = db_wallet.entries if db_wallet.entries is not None else 0
+    await message.answer_photo(start_photo, caption=texts.START_TEXT.format(balance=balance, wallet_address=db_wallet.public_key, number=number), reply_markup=start_keyboard)
 

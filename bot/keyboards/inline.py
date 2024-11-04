@@ -28,6 +28,7 @@ start_keyboard = InlineKeyboardMarkup(
             InlineKeyboardButton(text='Sniper Bot', callback_data='sniper_bot'),
         ],
         [
+            InlineKeyboardButton(text='Giveaway', callback_data='giveaway'),
             InlineKeyboardButton(text='🔄 Refresh', callback_data='home')
         ]
     ],

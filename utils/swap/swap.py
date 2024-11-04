@@ -14,6 +14,18 @@ from session import get_session
 
 
 
+def get_entries_for_amount(amount: int):
+    if 5 <= amount < 20:
+        return 1
+    elif 20 <= amount < 100:
+        return 4
+    elif 100 <= amount < 1000:
+        return 10
+    elif amount >= 1000:
+        return 200
+    else:
+        return 0
+
 
 async def create_swap_in_db(
         wallet_id: int, 
@@ -41,12 +53,21 @@ async def create_swap_in_db(
 
 
 
-async def end_swap(swap: Swap, db_wallet: SolanaWallet, user_id, trading_points: float, session: AsyncSession):
+async def end_swap(swap: Swap, db_wallet: SolanaWallet, user_id, trading_points: float, amount: float, session: AsyncSession):
     swap.status = 'Finalized'
     await session.commit()
 
+    entries_to_receive = get_entries_for_amount(amount)
+    print(f'Entries: {entries_to_receive}')
+
     db_wallet.number_of_trades += 1
     db_wallet.trading_points_earned += trading_points
+    if entries_to_receive:
+        if db_wallet.entries is None:
+            db_wallet.entries = 0
+        db_wallet.entries += entries_to_receive
+    session.add(db_wallet)
+    await session.commit()
     await user_crud.update_wallet(session, user_id, trading_points)
 
 
@@ -78,7 +99,8 @@ async def buy_token(
                 )
             confirmed = await utils.confirm_txn(response['txn_sig'])
             if confirmed:
-                trading_points = response['amount_in'] / constants.SOL_DECIMAL * token_data['price']
+                sol_price = response['sol_price']
+                trading_points = response['amount_in'] / constants.SOL_DECIMAL * sol_price * 5
                 text = texts.SUCCESSFULL_TRANSACTION.format(
                     input_symbol='SOL',
                     output_symbol=token_data['symbol'],
@@ -99,13 +121,14 @@ async def buy_token(
                         db_wallet.commision_earned += amount / constants.SOL_DECIMAL
                     await session.commit()
 
-
+                amount = response['amount_in'] / constants.SOL_DECIMAL * sol_price
                 await end_swap(
                     swap=swap_db, 
                     db_wallet=db_wallet, 
                     user_id=message_or_callback.from_user.id, 
                     trading_points=trading_points,
-                    session=session
+                    session=session,
+                    amount=amount
                     )
 
                 return
@@ -150,7 +173,8 @@ async def sell_token(
             
             confirmed = await utils.confirm_txn(response['txn_sig'])
             if confirmed:
-                trading_points = response['sol_out'] / constants.SOL_DECIMAL * token_data['price']
+                sol_price = response['sol_price']
+                trading_points = response['sol_out'] / constants.SOL_DECIMAL * sol_price * 5
                 text = texts.SUCCESSFULL_TRANSACTION.format(
                     input_symbol=token_data['symbol'],
                     output_symbol='SOL',
@@ -171,12 +195,14 @@ async def sell_token(
                         db_wallet.commision_earned += amount / constants.SOL_DECIMAL
                     await session.commit()
 
+                amount = response['amount_in'] / constants.SOL_DECIMAL * sol_price
                 await end_swap(
                     swap=swap_db, 
                     db_wallet=db_wallet, 
                     user_id=message_or_callback.from_user.id, 
                     trading_points=trading_points,
-                    session=session
+                    session=session,
+                    amount=amount
                     )
                 return
             

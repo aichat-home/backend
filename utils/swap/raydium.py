@@ -106,6 +106,7 @@ async def buy(output_mint: str, sol_in: float, slippage: float, payer_keypair: K
             'minimum_amount_out': amount_out,
             'token_decimal': token_decimal,
             'txn_sig': txn_sig,
+            'sol_price': sol_data['price'],
             'result': result
         }
     
@@ -176,6 +177,7 @@ async def sell(input_mint: str, amount, slippage, payer_keypair: Keypair, user_i
             'txn_sig': txn_sig,
             'token_decimal': token_decimal,
             'fee_amount': fee_amount / SOL_DECIMAL,
+            'sol_price': sol_data['price'],
             'result': result
         }
     

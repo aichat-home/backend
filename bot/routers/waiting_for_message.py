@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.states import tokens, withdraw, settings, buy, sell, sniper
+from bot.states import tokens, withdraw, settings, buy, sell, sniper, partner
 
 
 router = Router()
@@ -29,6 +29,9 @@ async def waiting_for_message(message: Message, state: FSMContext, session: Asyn
         elif current_state in (sell.SellState.amount, sell.SellState.percent, sell.SellState.confirmation):
             await sell.sell_token(message, state, session)
             return
+        elif current_state == partner.CreatePartnerState.waiting_for_name:
+            await partner.create_partner(message, session)
+            return 
     
     await state.set_state(tokens.TokenState.token)
     await tokens.handle_token(message, state, session)
