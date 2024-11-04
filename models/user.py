@@ -156,6 +156,7 @@ class SolanaWallet(Base):
     number_of_snipes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     trading_points_earned: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     commision_earned: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    entries: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     Wallet: Mapped['Wallet'] = relationship('Wallet', back_populates='solana_wallets')
     withdraws: Mapped[list['Withdraw']] = relationship('Withdraw', back_populates='Wallet')

@@ -66,7 +66,7 @@ async def get_token_decimals(address: str):
     if decimals:
         return decimals
     
-    response = await client.get_account_info_json_parsed(Pubkey.from_string('95Pb7UEfqx1SyPAZJmfB8BCdZeekf6z16zj2Y8yKG5Jb'))
+    response = await client.get_account_info_json_parsed(Pubkey.from_string(address))
     if response:
         decimals = response.value.data.parsed['info']['decimals']
         simple_cache.set(f'token_decimals_{address}', decimals, 3600)
