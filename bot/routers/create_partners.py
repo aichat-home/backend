@@ -15,7 +15,7 @@ router = Router()
 
 
 
-ADMIN_IDS = (540314239, 1795945549)
+ADMIN_IDS = (540314239, 1019328409, 5145859752)
 
 
 @router.message(Command('create_partner'))
