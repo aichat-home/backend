@@ -20,20 +20,24 @@ class TokenState(StatesGroup):
 async def handle_token(message: Message, state: FSMContext, session: AsyncSession):
     current_state = await state.get_state()
     reply_markup = None
+    is_pair = False
     if current_state == TokenState.token.state:
         text = message.text
         if text.startswith('https://'):
             text = text.replace('https://', '')
             if text.startswith('birdeye'):
                 token = text.split('/')[2].split('?')[0]
+            elif text.startswith('dexscreener'):
+                is_pair = True
+                token = text.split('/')[2]
             else:
-                await message.answer('You can insert url only from Birdeye', reply_markup=reply_markup)
+                await message.answer('You can insert url only from Birdeye or Dexscreener', reply_markup=reply_markup)
                 await state.clear()
         else:
             token = message.text
         
         client_session = get_session()
-        token_data = await market.get_token_data_by_address(client_session, token)
+        token_data = await market.get_token_data_by_address(client_session, token, is_pair)
         if token_data:
             db_wallet = await wallet.get_wallet_by_id(session, message.from_user.id)
             balance = await wallet.get_wallet_balance(db_wallet.public_key)
@@ -49,7 +53,7 @@ async def handle_token(message: Message, state: FSMContext, session: AsyncSessio
                 banner = start_photo
             else:
                 text = (
-                    f'Buy <a href="https://solscan.io/token/{token}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
+                    f'Buy <a href="https://solscan.io/token/{token_data["address"]}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
                     f'💳 My Balance: <code>{balance} SOL</code>\n\n'
 
                     f'💸  Price: {token_data["price"]}\n'
@@ -70,7 +74,7 @@ async def handle_token(message: Message, state: FSMContext, session: AsyncSessio
                 banner = BufferedInputFile(image_buffer.getvalue(), filename="price_image.png")
 
 
-            reply_markup = buy_keyboard(token)
+            reply_markup = buy_keyboard(token_data['address'])
             await state.update_data(token_data=token_data)
 
         else:

@@ -23,7 +23,7 @@ router = Router()
 async def get_token(callback_query: CallbackQuery, state: FSMContext):
     await state.set_state(tokens.TokenState.token)
     await callback_query.message.edit_caption(caption=
-        'Buy Token:\n\nTo buy a token enter a token address, or a URL from Birdeye',
+        'Buy Token:\n\nTo buy a token enter a token address, or a URL from Birdeye or Dexscreener',
         reply_markup=cancel_keyboard
         )
     await callback_query.answer()

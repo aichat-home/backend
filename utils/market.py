@@ -30,7 +30,7 @@ def get_token_symbol(mint_to_search, mints):
             return mint
 
 
-async def get_token_data_by_address(session: ClientSession, address: str) -> dict:
+async def get_token_data_by_address(session: ClientSession, address: str, is_pair: bool = False) -> dict:
     '''Getting token data by address
     Uses Dexscreen API to fetch token data.
     '''
@@ -38,7 +38,10 @@ async def get_token_data_by_address(session: ClientSession, address: str) -> dic
     if data:
         return data
 
-    url = f'https://api.dexscreener.com/latest/dex/tokens/{address}'
+    if is_pair:
+        url = f'https://api.dexscreener.com/latest/dex/pairs/solana/{address}'
+    else:
+        url = f'https://api.dexscreener.com/latest/dex/tokens/{address}'
     
     async with session.get(url) as response:
         data = await response.json()
