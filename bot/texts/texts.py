@@ -5,6 +5,7 @@ START_TEXT = ('Welcome to BeamBot Trading Bot \n\n'
     '<code>{wallet_address}</code>\n\n'
 
     '💳 Balance: 💎 <code>{balance} SOL</code>\n\n'
+    '🎉Giveaway entries: 🎟️ {number}\n\n'
 
     'Join BeamBot Community:\n'
     '➤ <a href="https://t.me/BeambotXYZ">Telegram</a> | 𝕏  <a href="https://x.com/BeamBotXYZ">X.com</a>')

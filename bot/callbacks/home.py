@@ -18,11 +18,13 @@ async def refresh(callback_query: CallbackQuery, session: AsyncSession):
     db_wallet = await wallet.get_wallet_by_id(session, callback_query.from_user.id)
     balance = await wallet.get_wallet_balance(db_wallet.public_key)
     try:
+        number = db_wallet.entries if db_wallet.entries is not None else 0
         photo = InputMediaPhoto(
             media=start_photo, 
             caption=texts.START_TEXT.format(
                 balance=balance,
-                wallet_address=db_wallet.public_key
+                wallet_address=db_wallet.public_key,
+                number=number
             ))
 
         await callback_query.message.edit_media(

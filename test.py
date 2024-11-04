@@ -5,6 +5,7 @@ from session import get_session, init_session
 from rpc import client
 from utils.swap.utils import create_fee_instruction
 from utils import wallet
+from utils.swap import swap
 
 import base64
 from solders.keypair import Keypair # type: ignore
@@ -121,8 +122,8 @@ async def main():
     private_key = b'\xe5\tK4\x1d\xc7\x9f]fD\x19\x9dq\xd4]%\xda\x97\x7fP]l1\x17\xb9\xaa1\x0fx\xaf]\xa3'
     keypair = Keypair.from_seed(private_key)
 
-    init_session()
-    session = get_session()
+    # init_session()
+    # session = get_session()
     
     # public_key = 'F1pVGrtES7xtvmtKZMMxNf7K4asrqyAzLVtc8vHBuELu'
     # output_mint = '2VRbHRxjDxoA6yQhZJqm1Xt2jCtjFa2PVkNWsaQwpump'
@@ -151,9 +152,10 @@ async def main():
     # txn_sig = txn_sig.value
     # print(txn_sig)
 
-    token = await wallet.get_token('7PxdDumxtxhaQLLnLdib1fZx6tfznPoaeAQZ8AXv8Bcr', 'BZ1fTDtwXiyK32cLG7dLLmRWyKeghFHLkkiVGuruTvgz')
-    print(token)
-    await session.close()
+    # token = await wallet.get_token('7PxdDumxtxhaQLLnLdib1fZx6tfznPoaeAQZ8AXv8Bcr', 'BZ1fTDtwXiyK32cLG7dLLmRWyKeghFHLkkiVGuruTvgz')
+    # print(token)
+    print(swap.get_entries_for_amount(80000))
+    # await session.close()
 
 
 asyncio.run(main())
