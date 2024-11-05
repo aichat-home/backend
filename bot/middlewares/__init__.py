@@ -1,1 +1,2 @@
 from .session_middleware import DbSessionMiddleware
+from .only_dm_middleware import OnlyDMMiddleware
