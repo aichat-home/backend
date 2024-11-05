@@ -39,7 +39,7 @@ def get_layer_for_amount(amount: int):
 async def get_all_instructions_for_referrals(user_id: int, from_pubkey: str, fee_amount: int, layers: int, session: AsyncSession):
     instructions = []
     total_fee = 0
-    result = {}
+    result = []
 
     referral_layers = await get_referral_layers(user_id=user_id, layers=layers, session=session)
     if referral_layers:
@@ -59,7 +59,7 @@ async def get_all_instructions_for_referrals(user_id: int, from_pubkey: str, fee
                 if instruction:
                     total_fee += amount
                     instructions.append(instruction)
-                    result[wallet] = amount
+                    result.append(wallet, amount)
     
     return instructions, total_fee, result
 

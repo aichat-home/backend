@@ -115,9 +115,9 @@ async def buy_token(
                 else:
                     await message_or_callback.message.edit_caption(caption=text, reply_markup=to_home())
 
-                result: dict[SolanaWallet, int] = response['result']
+                result: list[tuple[SolanaWallet, int]] = response['result']
                 if result:
-                    for db_wallet, amount in result.items():
+                    for db_wallet, amount in result:
                         db_wallet.commision_earned += amount / constants.SOL_DECIMAL
                     await session.commit()
 
@@ -189,13 +189,13 @@ async def sell_token(
                 else:
                     await message_or_callback.message.edit_caption(caption=text, reply_markup=to_home())
 
-                result: dict[SolanaWallet, int] = response['result']
+                result: list[tuple[SolanaWallet, int]] = response['result']
                 if result:
-                    for db_wallet, amount in result.items():
+                    for db_wallet, amount in result:
                         db_wallet.commision_earned += amount / constants.SOL_DECIMAL
                     await session.commit()
 
-                amount = response['amount_in'] / constants.SOL_DECIMAL * sol_price
+                amount = response['sol_out'] / constants.SOL_DECIMAL * sol_price
                 await end_swap(
                     swap=swap_db, 
                     db_wallet=db_wallet, 
