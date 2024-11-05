@@ -154,7 +154,8 @@ async def main():
 
     # token = await wallet.get_token('7PxdDumxtxhaQLLnLdib1fZx6tfznPoaeAQZ8AXv8Bcr', 'BZ1fTDtwXiyK32cLG7dLLmRWyKeghFHLkkiVGuruTvgz')
     # print(token)
-    print(swap.get_entries_for_amount(80000))
+    for key, value in [(1, 2), (3, 4)]:
+        print(key, value)
     # await session.close()
 
 
