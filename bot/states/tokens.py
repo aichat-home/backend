@@ -33,6 +33,7 @@ async def handle_token(message: Message, state: FSMContext, session: AsyncSessio
             else:
                 await message.answer('You can insert url only from Birdeye or Dexscreener', reply_markup=reply_markup)
                 await state.clear()
+                return
         else:
             token = message.text
         
