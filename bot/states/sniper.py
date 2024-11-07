@@ -4,7 +4,7 @@ from aiogram.fsm.state import StatesGroup, State
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from utils import wallet, sniper, metaplex
+from utils import wallet, metaplex
 from models import Order
 from session import get_session
 from bot.keyboards import sniper_token, edit_sniper_token
@@ -30,7 +30,6 @@ async def snipe_token(message: Message, state: FSMContext, session: AsyncSession
 
     current_state = await state.get_state()
     data = await state.get_data()
-    client_session = get_session()
 
 
     if current_state == SnipeState.token.state:
@@ -135,9 +134,6 @@ async def snipe_token(message: Message, state: FSMContext, session: AsyncSession
                 f'💳 My Balance: <code>{balance} SOL</code>'
             )
             await message.answer_photo(photo=start_photo, caption=text, reply_markup=edit_sniper_token(order.slippage, order.gas, order.sol_amount, order.mev_protection, order.id))
-            
-            client_session = get_session()
-            await sniper.update_order_service(message.from_user.id, order, db_wallet.encrypted_private_key, client_session)
 
         except Exception as e:
             print(e)
@@ -163,9 +159,6 @@ async def snipe_token(message: Message, state: FSMContext, session: AsyncSession
                     f'💳 My Balance: <code>{balance} SOL</code>'
                 )
                 await message.answer_photo(photo=start_photo, caption=text, reply_markup=edit_sniper_token(order.slippage, order.gas, order.sol_amount, order.mev_protection, order.id))
-                
-                client_session = get_session()
-                await sniper.update_order_service(message.from_user.id, order, db_wallet.encrypted_private_key, client_session)
             else:
                 await message.answer(text='Invalid slippage value. Please enter a number between 1 and 100')
         except Exception as e:
@@ -191,9 +184,6 @@ async def snipe_token(message: Message, state: FSMContext, session: AsyncSession
                 f'💳 My Balance: <code>{balance} SOL</code>'
             )
             await message.answer_photo(photo=start_photo, caption=text, reply_markup=edit_sniper_token(order.slippage, order.gas, order.sol_amount, order.mev_protection, order.id))
-            
-            client_session = get_session()
-            await sniper.update_order_service(message.from_user.id, order, db_wallet.encrypted_private_key, client_session)
         except Exception as e:
             print(e)
             await message.answer(text='Invalid value')
