@@ -10,7 +10,7 @@ from . import raydium, utils, constants
 from bot.keyboards import to_home
 from bot.texts import texts
 from models import SolanaWallet, Swap
-from session import get_session
+from utils import wallet
 
 
 
@@ -66,9 +66,10 @@ async def end_swap(swap: Swap, db_wallet: SolanaWallet, user_id, trading_points:
         if db_wallet.entries is None:
             db_wallet.entries = 0
         db_wallet.entries += entries_to_receive
+    bbp = await wallet.change_volume(db_wallet, session, amount)
     session.add(db_wallet)
     await session.commit()
-    await user_crud.update_wallet(session, user_id, trading_points)
+    await user_crud.update_wallet(session, user_id, trading_points + bbp)
 
 
 async def buy_token(
