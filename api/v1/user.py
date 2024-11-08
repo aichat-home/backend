@@ -13,6 +13,7 @@ from utils import (
     get_rewards,
     task,
     activity,
+    wallet
 )
 
 from schemas import UserCreate, UserCreateBody, GetOrCreate, SaveWallet
@@ -145,6 +146,8 @@ async def get_me(
     await session.merge(user)
     await session.commit()
 
+    db_wallet = await wallet.get_wallet_by_id(session, user.id)
+
     return {
         "id": user.id,
         "last_name": user.last_name,
@@ -159,6 +162,9 @@ async def get_me(
         "next_day_plus_every_second": next_day_plus,
         "total_duration": total_duration,
         "reffer_rewards": rewards_response,
+        "current_level": db_wallet.level,
+        "total_volume": db_wallet.total_volume,
+        "volume_levels": wallet.VOLUME_LEVELS
     }
 
 
