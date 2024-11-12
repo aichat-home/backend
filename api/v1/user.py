@@ -146,7 +146,13 @@ async def get_me(
     await session.merge(user)
     await session.commit()
 
+    current_level = None
+    total_volume = None
     db_wallet = await wallet.get_wallet_by_id(session, user.id)
+
+    if db_wallet:
+        current_level = db_wallet.level
+        total_volume = db_wallet.total_volume
 
     return {
         "id": user.id,
@@ -162,8 +168,8 @@ async def get_me(
         "next_day_plus_every_second": next_day_plus,
         "total_duration": total_duration,
         "reffer_rewards": rewards_response,
-        "current_level": db_wallet.level,
-        "total_volume": db_wallet.total_volume,
+        "current_level": current_level,
+        "total_volume": total_volume,
         "volume_levels": wallet.VOLUME_LEVELS
     }
 
