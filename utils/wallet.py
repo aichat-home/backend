@@ -218,3 +218,55 @@ async def create_withdraw_in_db(
     )
     session.add(withdraw)
     await session.commit()
+
+
+
+VOLUME_LEVELS = {
+    1: (1, 1),
+    2: (5, 6),
+    3: (10, 15),
+    4: (25, 50),
+    5: (100, 150),
+    6: (250, 500),
+    7: (1000, 2000),
+    8: (5000, 10000),
+    9: (10000, 25000),
+    10: (50000, 1500000),
+    11: (100000, 300000),
+    12: (250000, 1000000),
+    13: (500000, 2500000),
+    14: (1000000, 5000000),
+    15: (2500000, 10000000),
+    16: (5000000, 20000000),
+    17: (10000000, 40000000)
+}
+
+
+def get_level_for_volume(volume: float):
+    # Sort thresholds in ascending order
+    levels = VOLUME_LEVELS.items()
+
+    for level, (level_volume, bbp) in levels:
+        if volume >= level_volume:
+            next_level_volume = VOLUME_LEVELS.get(level+1)
+            if next_level_volume is None or volume < next_level_volume[0]:
+                return level, bbp
+    
+    return None, 0
+
+
+async def change_volume(wallet: Wallet, session: AsyncSession, volume: float):
+    current_level = wallet.level
+    if wallet.total_volume is None:
+        wallet.total_volume = 0
+    current_volume = wallet.total_volume
+
+    level, bbp = get_level_for_volume(current_volume + volume)
+    if level and level != current_level:
+        wallet.level = level
+    wallet.total_volume += volume
+
+    session.add(wallet)
+    await session.commit()
+
+    return bbp

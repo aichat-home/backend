@@ -19,7 +19,6 @@ from solana.rpc.commitment import Processed
 from solana.rpc.types import TokenAccountOpts
 from solana.rpc.types import TxOpts
 
-
 from solders.instruction import Instruction  # type: ignore
 from solders.keypair import Keypair  # type: ignore
 from solders.pubkey import Pubkey  # type: ignore
@@ -37,7 +36,11 @@ from spl.token.instructions import (
     get_associated_token_address,
     initialize_account,
     sync_native,
+    close_account,
+    CloseAccountParams
 )
+from spl.token.constants import TOKEN_PROGRAM_ID
+
 
 
 async def make_buy_instruction_for_raydium(pair_address: str, amount_in: str, slippage: float, payer_keypair: Keypair):
@@ -131,6 +134,9 @@ async def make_buy_instruction_for_raydium(pair_address: str, amount_in: str, sl
         instructions.append(token_account_instr)
 
     instructions.append(swap_instructions)
+    
+    close_wsol_account_instr = close_account(CloseAccountParams(TOKEN_PROGRAM_ID, wsol_token_account, payer_keypair.pubkey(), payer_keypair.pubkey()))
+    instructions.append(close_wsol_account_instr)
 
     return {
         'instructions': instructions,
@@ -208,6 +214,9 @@ async def make_sell_instructions_for_raydium(pair_address: str, amount: int, sli
         instructions.append(init_wsol_account_instr)
 
     instructions.append(swap_instructions)
+
+    close_wsol_account_instr = close_account(CloseAccountParams(TOKEN_PROGRAM_ID, wsol_token_account, payer_keypair.pubkey(), payer_keypair.pubkey()))
+    instructions.append(close_wsol_account_instr)
 
     return {
         'instructions': instructions,

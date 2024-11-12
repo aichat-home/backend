@@ -1,7 +1,7 @@
 from solana.rpc.async_api import AsyncClient
 
 
-RPC = "https://solana-api.instantnodes.io/token-DBZogRbqut06bL19vTd2LLkSkREYOSk6"
+RPC = "https://solana-api.instantnodes.io/token-br4WG94rRHMpSCrPvGTLeQwPLK2NrmKP"
 MAINNET_RPC = 'https://api.mainnet-beta.solana.com'
 # RPC = 'https://api.devnet.solana.com'
 client = AsyncClient(RPC)

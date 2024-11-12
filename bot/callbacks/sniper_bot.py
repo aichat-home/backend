@@ -131,10 +131,6 @@ async def create_sniper(callback_query: CallbackQuery, state: FSMContext, sessio
     
     await callback_query.message.edit_caption(caption='Sniper created successfully', reply_markup=sniper_show_keyboar())
 
-    client_session = get_session()
-    await sniper.create_order_service(callback_query.from_user.id, order, db_wallet.encrypted_private_key, client_session)
-    
-
 
 @router.callback_query(F.data.startswith('edit_sniper_show'))
 async def edit_sniper(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
@@ -195,14 +191,12 @@ async def change_sniper_gas(callback_query: CallbackQuery, state: FSMContext, se
             await state.update_data(token_data=token_data)
             db_wallet = await wallet.get_wallet_by_id(session, callback_query.from_user.id)
             balance = await wallet.get_wallet_balance(db_wallet.public_key)
-            client_session = get_session()
 
         text = (
                     f'Snipe <a href="https://solscan.io/token/{order.token_address}">🅴</a> <b>{token_data["symbol"].upper()}</b>\n'
                     f'💳 My Balance: <code>{balance} SOL</code>'
                 )
         await callback_query.message.edit_caption(caption=text, reply_markup=edit_sniper_token(order.slippage, order.gas, order.sol_amount, order.mev_protection, order.id))
-        await sniper.update_order_service(callback_query.from_user.id, order, db_wallet.encrypted_private_key, client_session)
 
     except Exception as e:
         print(e)
@@ -215,5 +209,3 @@ async def delete_sniper(callback_query: CallbackQuery, session: AsyncSession):
     await sniper.remove_order(order_id, session)
 
     await callback_query.message.edit_caption(caption='Sniper removed successfully', reply_markup=to_home())
-    session = get_session()
-    await sniper.remove_order_service(order_id, session)
