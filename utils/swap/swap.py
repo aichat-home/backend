@@ -3,13 +3,14 @@ from datetime import datetime
 from aiogram.types import CallbackQuery, Message
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 from solders.keypair import Keypair # type: ignore
 from .. import wallet, user as user_crud
 from . import raydium, utils, constants
 from bot.keyboards import to_home
 from bot.texts import texts
-from models import SolanaWallet, Swap
+from models import SolanaWallet, Swap, RefferAccount
 from utils import wallet
 
 
@@ -119,7 +120,14 @@ async def buy_token(
                 result: list[tuple[SolanaWallet, int]] = response['result']
                 if result:
                     for db_wallet, amount in result:
-                        db_wallet.commision_earned += amount / constants.SOL_DECIMAL
+                        stmt = select(RefferAccount).filter(RefferAccount.oneWhoInvited == db_wallet.wallet)
+                        reffer_account = await session.execute(stmt)
+                        reffer_account = reffer_account.scalars().first()
+
+                        if reffer_account:
+                            if reffer_account.earned_sol is None:
+                                reffer_account.earned_sol = 0
+                            reffer_account.earned_sol += amount / constants.SOL_DECIMAL
                     await session.commit()
 
                 amount = response['amount_in'] / constants.SOL_DECIMAL * sol_price
@@ -193,7 +201,14 @@ async def sell_token(
                 result: list[tuple[SolanaWallet, int]] = response['result']
                 if result:
                     for db_wallet, amount in result:
-                        db_wallet.commision_earned += amount / constants.SOL_DECIMAL
+                        stmt = select(RefferAccount).filter(RefferAccount.oneWhoInvited == db_wallet.wallet)
+                        reffer_account = await session.execute(stmt)
+                        reffer_account = reffer_account.scalars().first()
+
+                        if reffer_account:
+                            if reffer_account.earned_sol is None:
+                                reffer_account.earned_sol = 0
+                            reffer_account.earned_sol += amount / constants.SOL_DECIMAL
                     await session.commit()
 
                 amount = response['sol_out'] / constants.SOL_DECIMAL * sol_price

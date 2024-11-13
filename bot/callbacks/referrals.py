@@ -27,12 +27,22 @@ async def refresh(callback_query: CallbackQuery, session: AsyncSession):
     # Fetch all referred accounts
     referrals = result.scalars().all()
 
-    db_wallet = await wallet.get_wallet_by_id(session, callback_query.from_user.id)
+    result = await session.execute(
+        select(RefferAccount)
+        .filter(RefferAccount.oneWhoInvited == callback_query.from_user.id)  # Filtering by the ID of the one who invited
+    )
+
+    # Fetch all referred accounts
+    referrals = result.scalars().all()
+    commision_earned = 0
+    if referrals:
+        for referral in referrals:
+            commision_earned += referral.earned_sol
 
     await callback_query.message.edit_caption(caption=texts.REFERRALS_TEXT.format(
         referral_code=account.inviteCode,
         referral_count=len(referrals),
-        sol_earned=db_wallet.commision_earned
+        sol_earned=commision_earned
         ), reply_markup=to_home())
 
     await callback_query.answer()

@@ -59,7 +59,7 @@ async def get_all_instructions_for_referrals(user_id: int, from_pubkey: str, fee
                 if instruction:
                     total_fee += amount
                     instructions.append(instruction)
-                    result.append(wallet, amount)
+                    result.append((wallet, amount))
     
     return instructions, total_fee, result
 
