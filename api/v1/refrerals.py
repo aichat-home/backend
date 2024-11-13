@@ -5,7 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from schemas import RefferResponse
-from utils import validate_dependency
+from utils import validate_dependency, market
+from utils.swap.constants import SOL
+from session import get_session
 from models import RefferAccount
 from db import database
 
@@ -24,4 +26,18 @@ async def get_reffers(session: AsyncSession = Depends(database.get_async_session
 
     # Fetch all referred accounts
     referrals = result.scalars().all()
-    return referrals
+    client_session = get_session()
+    sol_data = await market.get_token_data_by_address(client_session, SOL)
+    sol_price = sol_data.get('price', 0)
+    response = []
+
+    for referral in referrals:
+        response.append(
+            {
+                'id': referral.id,
+                'earned_coins': referral.earned_coins,
+                'earned_usd': referral.earned_sol * sol_price,
+                'user': referral.user
+            }
+        )
+    return response

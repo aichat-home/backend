@@ -12,5 +12,5 @@ def get_session() -> ClientSession:
     """Get the global session from the app state."""
     global session
     if session is None:
-        raise Exception
+        session = ClientSession()
     return session  # Return the session

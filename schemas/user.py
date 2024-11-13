@@ -66,6 +66,7 @@ class UserCreateBody(BaseModel):
 class RefferResponse(BaseModel):
     id: int
     earned_coins: int 
+    earned_usd: float
     user: UserBase
 
 

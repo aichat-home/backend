@@ -8,7 +8,7 @@ from utils import pump
 async def main():
     init_session()
 
-    asyncio.create_task(pump.websocket_handler())
+    # asyncio.create_task(pump.websocket_handler())
 
     await bot.delete_webhook()
 

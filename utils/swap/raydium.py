@@ -67,7 +67,7 @@ async def buy(output_mint: str, sol_in: float, slippage: float, payer_keypair: K
         
         layers = get_layer_for_amount(price * sol_in)
         print(f'Layer: {layers}')
-        comission_instructions, referral_amount_fee, result = None, 0, {}
+        comission_instructions, referral_amount_fee, result = None, 0, []
         if layers:
             comission_instructions, referral_amount_fee, result = await get_all_instructions_for_referrals(user_id, str(public_key), fee_amount, layers, session)
             print(comission_instructions, referral_amount_fee)
@@ -138,7 +138,7 @@ async def sell(input_mint: str, amount, slippage, payer_keypair: Keypair, user_i
         
         print(price * amount_out_ui)
         layers = get_layer_for_amount(price * amount_out_ui)
-        comission_instructions, referral_amount_fee, result = None, 0, {}
+        comission_instructions, referral_amount_fee, result = None, 0, []
         if layers:
             comission_instructions, referral_amount_fee, result = await get_all_instructions_for_referrals(user_id, str(public_key), fee_amount, layers, session)
             print(comission_instructions, referral_amount_fee)

@@ -92,6 +92,7 @@ class RefferAccount(Base):
     id: Mapped[int] = mapped_column(BigInteger, ForeignKey('users.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True, index=True)
     earned_coins: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     earned_tickets: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    earned_sol: Mapped[float] = mapped_column(Float, nullable=True, default=0)
     oneWhoInvited: Mapped[int] = mapped_column(BigInteger, ForeignKey('accounts.id', onupdate='CASCADE', ondelete='CASCADE'), index=True)
 
     user: Mapped['User'] = relationship('User', back_populates='refferAccount')
